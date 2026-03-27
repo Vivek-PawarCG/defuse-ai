@@ -90,11 +90,11 @@ export default function BriefingScreen({ onEnterField, apiReady, personality, sp
       <div className="static-canvas" ref={staticRef}></div>
       <div className="briefing-content">
         <h1 className="title-defuse">DEFUSE</h1>
-        <p className="subtitle">BOMB DISPOSAL TRAINING — FIELD EXERCISE 7</p>
+        <p className="subtitle">BOMB DISPOSAL TRAINING - FIELD EXERCISE</p>
         <div className="briefing-box">
           <div className="briefing-header">
             <span className="blink-dot"></span>
-            <span>INCOMING TRANSMISSION — COL. REX</span>
+            <span>INCOMING TRANSMISSION - COL. REX</span>
           </div>
 
           {!transmissionAccepted ? (
