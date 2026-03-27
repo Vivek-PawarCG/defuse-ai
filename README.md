@@ -5,6 +5,48 @@
 ## 🧠 AI as a Dynamic Metagame
 Guided by **Colonel Rex** (powered by Google's Generative AI), Gemini analyzes exact gameplay telemetry—tile coordinates and adjacent mines—to generate spoken tactical advice or panicked warnings on the fly. 
 
+## 🏗️ System Architecture
+
+```mermaid
+graph TD
+    subgraph "Frontend (React + Vite)"
+        UI[Terminal UI]
+        GL[Game Logic Engine]
+        AA[App Check / reCaptcha v3]
+        AN[Firebase Analytics]
+        TTS[Web Speech API]
+    end
+
+    subgraph "Backend (Node.js Proxy)"
+        SRV[Express Server]
+        SEC[Helmet CSP / Rate Limit]
+        GPM[GCP Metric Service]
+        CFG[Runtime Config Handshake]
+    end
+
+    subgraph "Google Cloud Ecosystem"
+        GEM[Gemini 1.5/2.5 Flash]
+        DB[(Firebase Firestore)]
+        SM[Secret Manager]
+        LOG[Cloud Logging]
+        MON[Cloud Monitoring]
+    end
+
+    UI --> GL
+    GL --> SRV
+    SRV --> SEC
+    SEC --> GEM
+    GL --> AA
+    GL --> AN
+    AA --> DB
+    SRV --> SM
+    SRV --> LOG
+    SRV --> GPM
+    GPM --> MON
+    SRV --> CFG
+    GL --> TTS
+```
+
 ---
 
 ## ⚡ Technical Optimizations
