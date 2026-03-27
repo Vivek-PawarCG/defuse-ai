@@ -22,8 +22,10 @@ export default function MinesweeperGrid({
   }, []);
 
   const gridStyle = {
-    gridTemplateColumns: `${labelSize}px repeat(${cols}, ${tileSize}px)`,
-    gridTemplateRows: `${labelSize}px repeat(${rows}, ${tileSize}px)`,
+    '--tileSize': `${tileSize}px`,
+    '--labelSize': `${labelSize}px`,
+    gridTemplateColumns: `var(--labelSize) repeat(${cols}, var(--tileSize))`,
+    gridTemplateRows: `var(--labelSize) repeat(${rows}, var(--tileSize))`,
   };
 
   const getTileClass = (cell, r, c) => {
@@ -94,8 +96,6 @@ export default function MinesweeperGrid({
                 aria-label={ariaLabel}
                 className={getTileClass(cell, r, c)}
                 style={{
-                  width: tileSize + 'px',
-                  height: tileSize + 'px',
                   ...(heatVal !== null && heatVal !== undefined
                     ? { '--heat': heatVal.toFixed(3) }
                     : {}),

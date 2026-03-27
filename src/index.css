@@ -389,9 +389,23 @@ body,
 /* ─── GRID PANEL ────────────────────────────────── */
 #grid-panel {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     flex-shrink: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    padding-bottom: 10px; /* Space for scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: var(--green-dim) transparent;
+}
+
+#grid-panel::-webkit-scrollbar {
+    height: 4px;
+}
+
+#grid-panel::-webkit-scrollbar-thumb {
+    background: var(--green-dim);
+    border-radius: 4px;
 }
 
 .grid {
@@ -405,6 +419,8 @@ body,
 
 /* ─── TILES ─────────────────────────────────────── */
 .tile {
+    width: var(--tileSize);
+    height: var(--tileSize);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -415,6 +431,7 @@ body,
     border: 1px solid rgba(85, 85, 85, 0.4);
     transition: all 0.15s;
     position: relative;
+    flex-shrink: 0; /* Prevent tile from shrinking */
 }
 
 .tile-hidden {
