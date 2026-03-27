@@ -60,10 +60,6 @@ export default async function handler(req, res) {
     res.status(200).json({ responseText });
   } catch (error) {
     console.error("Gemini Error:", error);
-
-    // Provide a diegetic error fallback for the game so it handles 500s gracefully
-    res.status(200).json({
-      responseText: "RADIO INTERFERENCE... Secure channel degraded. Repeat your last, soldier."
-    });
+    res.status(error.status || 500).json({ error: error.message || "Uplink failure" });
   }
 }

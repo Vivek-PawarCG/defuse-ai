@@ -19,9 +19,6 @@ export async function callGeminiAPI(systemInstruction, contents, generationConfi
     });
 
     if (!res.ok) {
-      if (res.status === 429) {
-        return 'RADIO INTERFERENCE... [429: Too Many Requests]. Standby.';
-      }
       throw new Error(`API ${res.status}`);
     }
 
