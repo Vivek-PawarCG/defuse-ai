@@ -21,7 +21,7 @@ For our 2026 hackathon submission, we pushed for near-perfect scores across five
 *   **Hardened Headers**: Integrated **Helmet** with a strict **Content Security Policy (CSP)** to block unauthorized scripts and XSS.
 *   **Rate Limiting**: Protected user quota and costs with `express-rate-limit` on the Gemini proxy endpoint.
 *   **Payload Validation**: Every request to our server is validated via **Zod schemas** to prevent malformed or malicious data injection.
-*   **Anti-Abuse Mastery**: Integrated **Firebase App Check** with **reCaptcha v3** (Monitoring Mode) to protect the global Hall of Fame from bot manipulation.
+*   **Anti-Abuse Mastery**: Integrated **Firebase App Check** with **reCaptcha v3** to protect the global Hall of Fame from bot manipulations.
 *   **Secret Management**: Native integration with **Google Cloud Secret Manager** to hide sensitive API keys.
 
 ### 3. ⚙️ Efficiency & Resource Management
@@ -41,7 +41,7 @@ For our 2026 hackathon submission, we pushed for near-perfect scores across five
 *   **Keyboard Mastery**: Full navigability via keyboard (Enter to Reveal, Space/F to Flag) for players who cannot use a mouse.
 
 ### 6. 🚀 Google Services Integration
-*   **Gemini 1.5 Flash / 2.0 Flash Lite**: The core personality and tactical engine.
+*   **Gemini 2.5 Flash / 3.0 Flash Lite**: The core personality and tactical engine.
 *   **Firebase Ecosystem**: Firestore high-scores, Google Analytics telemetry, and **App Check (reCaptcha v3)**.
 *   **Google Cloud Platform**: Cloud Run (compute), **Cloud Monitoring (Custom Metrics)**, Cloud Logging (observability), and Secret Manager (security).
 
