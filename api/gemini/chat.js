@@ -39,7 +39,7 @@ export default async function handler(req, res) {
     }
 
     // Use default if not explicitly defined
-    const modelName = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+    const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
 
     // Extract the raw text from the REST-style system_instruction structure that the frontend sends
     const sysPromptText = system_instruction?.parts?.[0]?.text || system_instruction || "";
