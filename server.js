@@ -8,6 +8,7 @@ import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import { Logging } from '@google-cloud/logging';
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
+import monitoring from '@google-cloud/monitoring';
 
 import chatHandler from './api/gemini/chat.js';
 import healthHandler from './api/health.js';
@@ -18,6 +19,9 @@ import healthHandler from './api/health.js';
  */
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const monitoringClient = new monitoring.MetricServiceClient();
+const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT || 'defuse-ai';
 
 const app = express();
 
@@ -109,10 +113,37 @@ app.use('/api/', apiLimiter);
 app.post('/api/gemini/chat', async (req, res, next) => {
   // Ensure key is loaded before handling request
   await getGeminiKey();
+  recordMetric('gemini_api_requests', 1);
   chatHandler(req, res, next);
 });
 
-// ─── Health check ──────────────────────────────────────────
+/**
+ * Record a custom metric to Google Cloud Monitoring.
+ * @param {string} name - Metric name
+ * @param {number} value - Value to record
+ */
+async function recordMetric(name, value = 1) {
+  try {
+    const dataPoint = {
+      interval: { endTime: { seconds: Date.now() / 1000 } },
+      value: { doubleValue: value },
+    };
+    const timeSeriesData = {
+      metric: { type: `custom.googleapis.com/defuse_ai/${name}` },
+      resource: { type: 'global', labels: { project_id: PROJECT_ID } },
+      points: [dataPoint],
+    };
+    await monitoringClient.createTimeSeries({
+      name: monitoringClient.projectPath(PROJECT_ID),
+      timeSeries: [timeSeriesData],
+    });
+  } catch (err) {
+    // Silently fail to ensure game stability (Free Tier fallback)
+    console.debug("[Monitoring] Could not export metric.", err.message);
+  }
+}
+
+// ─── API Routes ─────────────────────────────────────────────
 app.get('/api/health', async (req, res, next) => {
   const hasKey = !!(await getGeminiKey());
   req.hasKey = hasKey; // Pass to handler if needed or just use current handler
@@ -128,10 +159,11 @@ app.get('/api/config', (req, res) => {
   res.status(200).json({
     apiKey: process.env.VITE_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY,
     authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN || process.env.FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID,
+    projectId: process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT,
     storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET || process.env.FIREBASE_STORAGE_BUCKET,
     messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || process.env.FIREBASE_MESSAGING_SENDER_ID,
     appId: process.env.VITE_FIREBASE_APP_ID || process.env.FIREBASE_APP_ID,
+    recaptchaKey: process.env.VITE_RECAPTCHA_SITE_KEY || process.env.RECAPTCHA_SITE_KEY,
   });
 });
 

@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, addDoc, query, orderBy, limit, getDocs, where, serverTimestamp } from "firebase/firestore";
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -47,6 +48,21 @@ export const initFirestore = async () => {
     const app = initializeApp(config);
     appInstance = app;
     db = getFirestore(app);
+
+    // ─── Initialize App Check (reCaptcha v3) ──────────────────
+    const siteKey = config.recaptchaKey || import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+    if (siteKey && typeof window !== 'undefined') {
+      try {
+        initializeAppCheck(app, {
+          provider: new ReCaptchaV3Provider(siteKey),
+          isTokenAutoRefreshEnabled: true
+        });
+        console.log("App Check initialized successfully (reCaptcha v3).");
+      } catch (checkErr) {
+        console.warn("App Check failed to initialize, but game continues.", checkErr);
+      }
+    }
+
     return db;
   } catch (e) {
     console.error("Firebase init error", e);
