@@ -7,7 +7,7 @@ Guided by **Colonel Rex** (powered by Google's Generative AI), Gemini analyzes e
 
 ---
 
-## ⚡ Technical Optimizations (The 95%+ Suite)
+## ⚡ Technical Optimizations
 
 For our 2026 hackathon submission, we pushed for near-perfect scores across five critical engineering pillars.
 
