@@ -63,8 +63,8 @@ export default function BriefingScreen({ onEnterField, apiReady, personality, sp
   useEffect(() => {
     const briefings = [
       "Stay sharp soldier.. this field punishes mistakes. Every move you make decides whether you walk out or not.",
-      "Steady now, soldier — this field tests nerves, not strength. One calm breath at a time, and you’ll make it through.",
-      "Attention, soldier. You’re entering a grid where precision isn’t optional — it’s survival. Maintain discipline and execute each move like your career depends on it."
+      "Steady now, soldier.. this field tests nerves, not strength. One calm breath at a time, and you'll make it through.",
+      "Attention, soldier. You're entering a grid where precision isn't optional, it's survival. Maintain discipline and execute each move like your life depends on it."
     ];
     setBriefingText(briefings[Math.floor(Math.random() * briefings.length)]);
     setLoading(false);
