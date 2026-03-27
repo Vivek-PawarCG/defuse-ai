@@ -13,12 +13,12 @@ export default async function handler(req, res) {
     const { system_instruction, contents, generationConfig } = req.body;
 
     // Use default if not explicitly defined
-    const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+    const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
 
     // Extract the raw text from the REST-style system_instruction structure that the frontend sends
     const sysPromptText = system_instruction?.parts?.[0]?.text || system_instruction || "";
 
-    const model = genAI.getGenerativeModel({ 
+    const model = genAI.getGenerativeModel({
       model: modelName,
       systemInstruction: sysPromptText
     });
@@ -31,10 +31,10 @@ export default async function handler(req, res) {
     res.status(200).json({ responseText: result.response.text() });
   } catch (error) {
     console.error("Gemini Error:", error);
-    
+
     // Provide a diegetic error fallback for the game so it handles 500s gracefully
-    res.status(200).json({ 
-      responseText: "RADIO INTERFERENCE... Secure channel degraded. Repeat your last, soldier." 
+    res.status(200).json({
+      responseText: "RADIO INTERFERENCE... Secure channel degraded. Repeat your last, soldier."
     });
   }
 }

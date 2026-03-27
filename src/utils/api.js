@@ -2,7 +2,7 @@
 
 export async function callGeminiAPI(systemInstruction, contents, generationConfig) {
   try {
-    const res = await fetch('/api/gemini', {
+    const res = await fetch('/api/gemini/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

@@ -17,7 +17,7 @@ app.use(cors());
 app.use(express.json());
 
 // API Routes perfectly matching the Vite frontend fetch structure
-app.post('/api/gemini', chatHandler);
+app.post('/api/gemini/chat', chatHandler);
 
 // ─── Health check ──────────────────────────────────────────
 app.get('/api/health', (req, res) => {
