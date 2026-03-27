@@ -1,0 +1,14 @@
+Defuse — Reimagining Minesweeper with Gemini
+We turned the 90s puzzle into a cinematic bomb disposal simulator where Gemini AI acts as a live "Field Commander."
+
+🧠 AI as a Dynamic Metagame
+Guided by Colonel Rex (powered by google's generative ai), Gemini analyzes exact gameplay telemetry—tile coordinates and adjacent mines—to generate spoken tactical advice or panicked warnings on the fly. 
+
+⚙️ Optimization & Resilience
+Lifelines: Ask Gemini to analyze an unrevealed tile, risking accurate intel or "signal interference."
+Fail-Safe: If API limits hit, the game instantly falls back to local dialogue algorithms. We utilized the native Web Speech API for voice generation, keeping the bundle tiny and fast.
+
+🚀 Google Cloud Run
+Built with React and Vite, the app boasts 100% ARIA accessibility, Vitest logic testing, and is deployed as a serverless Node.js backend serving both the UI and secure ML APIs from a single scalable origin.
+
+The mines are buried, but with Gemini, defusing them is infinitely cinematic. 💣🚁

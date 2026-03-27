@@ -1,73 +1,23 @@
-# DEFUSE — AI Bomb Disposal Expert
+# DEFUSE — Reimagining a Classic
 
-**BOMB DISPOSAL TRAINING — FIELD EXERCISE 7**
+**DEFUSE** is a cinematic, narrative-driven bomb disposal simulator powered by Google Gemini.
 
-DEFUSE is a high-stakes, military-themed Minesweeper game enhanced with AI intelligence. Face the field with **Colonel Rex**, your AI Bomb Disposal Expert, who provides real-time tactical advice, insults, or encouragement as you clear the minefield.
+## 🎯 Chosen Vertical
+**Retro Childhood Game**
+We took the iconic 1990s Windows puzzle game *Minesweeper* and reimagined it for 2026. Instead of clicking empty gray boxes in silence, players are guided by Colonel Rex, a dynamic, context-aware AI commander powered by the Gemini AI. We didn't clone the game; we evolved it into an immersive, high-stakes narrative experience.
 
----
+## 🧠 Approach and Logic
+Our approach was to physically separate the core mathematical engine (calculating adjacent mines and recursive flood-fills) from the user interface. By isolating the game state, we could perfectly parse player telemetry on every single click. 
 
-## 🚀 Key Features
+Instead of pre-written generic dialogue, we feed this exact gameplay telemetry (e.g., "The player clicked a safe tile, but there are 4 adjacent mines") directly into the `google's generative ai` SDK. Gemini then acts as a live "Field Commander," dynamically generating spoken tactical advice or panicked warnings based on the real-time mathematical danger.
 
-- **🤖 AI Intelligence (Colonel Rex)**: Powered by Google Gemini, Col. Rex monitors your every move. Choose between "Drill Sergeant", "Mentor", or "Comedian" personalities.
-- **🔦 Tactical Heatmap**: Toggle a probability heatmap to visualize the risk level of every hidden tile.
-- **⚡ AI Auto-Solver**: Feeling stuck? Let the AI analyze the board and make the next logical move for you.
-- **📡 Emergency Radio**: A one-time use lifeline to ask Col. Rex for intel on a specific coordinate (e.g., "B4").
-- **🎖️ Difficulty Ranks**: From **Rookie** (8x8) to **Legend** (30x16), test your skills across five intense ranks.
-- **📖 Field Manual**: Built-in guide covering advanced tactical patterns like the 1-2-1 and 1-2-2-1 logic.
-- **🔊 Tactical Audio**: Immersive military soundscapes and voice-enabled commentary (optional).
+## ⚙️ How the Solution Works
+1. **Frontend Interface**: A responsive, 100% ARIA-accessible React app running on Vite. It includes the complete visual overhaul into a CRTs/military terminal aesthetic.
+2. **Serverless AI Backend**: To protect API keys, we built a hybrid Node.js mapping structure. A dedicated handler (`api/gemini/chat.js`) acts as a secure proxy to the Gemini endpoints. This architecture is capable of running as a monolith on **Google Cloud Run** or as pure serverless functions natively on **Vercel**.
+3. **The Lifeline System**: Players can use an "Emergency Radio" to ask Gemini for intel on an unrevealed tile. Gemini is fed the *actual truth* (mine or safe) and roleplays confident advice or "compromised signal interference."
+4. **Native Text-to-Speech**: We hooked Gemini's generated dialogue directly into the browser's native Web Speech API, meaning every custom piece of advice from Colonel Rex is spoken aloud immediately, keeping the web-bundle tiny.
 
-## 🕹️ Game Walkthrough
-
-### 1. Mission Briefing
-When you first enter the field, you'll be met with a secure transmission from **Colonel Rex**. This is your briefing. Read the mission details carefully before clicking **"ENTER THE FIELD"**.
-
-### 2. Tactical Analysis
-Once on the grid, use the numbers to deduce mine locations.
-- **Left-Click** to reveal a tile.
-- **Right-Click** to flag a suspected mine.
-- **Heatmap (🌡 HEAT)**: If you're unsure, toggle the heatmap. Brighter colors indicate a higher probability of a mine based on surrounding numbers.
-
-### 3. AI Assistance
-Don't go it alone if the pressure is too high:
-- **Radio Intel**: Type a coordinate (like `B4`) into the Emergency Radio to get direct intel from Rex.
-- **Auto-Solver**: Click the **🤖 SOLVE** button to have the AI perform the next logical step.
-
-### 4. Extraction
-Clear all non-mine tiles to successfully complete the mission. If you hit a mine, the board will reveal all locations, and Rex will provide an **After Action Report** (often with a bit of "constructive" criticism).
-
----
-
-## 🎮 How to Play
-
-1.  **Objective**: Reveal all safe tiles without detonating a single mine.
-2.  **Controls**:
-    - **Left Click**: Reveal a tile.
-    - **Right Click / Long Press**: Flag a suspected mine.
-    - **Number Tiles**: Indicate how many mines are in the 8 adjacent squares.
-3.  **Victory**: Clear the entire field to earn your stripes.
-
-## 🛠️ Technical Stack
-
-- **Frontend**: HTML5, Vanilla CSS3 (Glassmorphism, Animations).
-- **Logic**: Pure JavaScript (ES6+).
-- **AI**: Google Gemini API Integration.
-- **Typography**: OSWALD & Share Tech Mono (via Google Fonts).
-
-## ⚙️ Setup & Configuration
-
-### Local Execution
-1.  Clone the repository:
-    ```bash
-    git clone https://github.com/aniketdongale09/minesweeper.git
-    ```
-2.  Open `index.html` in any modern web browser.
-
-### API Key (Required for AI Features)
-To enable Colonel Rex's commentary:
-1.  Click the **Settings (⚙️)** icon in the top right.
-2.  Enter your **Gemini API Key**.
-3.  Your key is stored securely in your browser's `localStorage` and is never sent to any server other than Google's API.
-
----
-
-*Good luck out there, soldier. Don't let the pressure get to you.*
+## 🤔 Assumptions Made
+* **Basic Ruleset Knowledge**: We assume players know the fundamental rules of Minesweeper (numbers represent the count of directly adjacent active mines). However, we mitigated a lack of rules knowledge by adding an interactive "Field Manual" button.
+* **Stable Connection**: We assume the player has a stable internet connection capable of resolving Gemini API payloads in < 2 seconds for smooth commentary. If the connection fails, the app has a built-in fallback array of hardcoded tactical phrases so the game never crashes.
+* **Modern Browser**: We assume the player is using a modern browser (Chrome, Safari, Firefox, Edge) capable of processing Web Audio and Speech Synthesis APIs to fully experience the dynamic Colonel Rex voice acting.
