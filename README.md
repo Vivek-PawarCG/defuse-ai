@@ -1,15 +1,23 @@
-# DEFUSE — Reimagining a Classic
+# DEFUSE — Reimagining Minesweeper with Gemini
 
-**DEFUSE** is a cinematic, narrative-driven bomb disposal simulator powered by Google Gemini.
+**We turned the 90s puzzle into a cinematic bomb disposal simulator where Gemini AI acts as a live "Field Commander."**
 
-## 🎯 Chosen Vertical
-**Retro Childhood Game**
-We took the iconic 1990s Windows puzzle game *Minesweeper* and reimagined it for 2026. Instead of clicking empty gray boxes in silence, players are guided by Colonel Rex, a dynamic, context-aware AI commander powered by the Gemini AI. We didn't clone the game; we evolved it into an immersive, high-stakes narrative experience.
+## 🧠 AI as a Dynamic Metagame
+Guided by **Colonel Rex** (powered by Google's Generative AI), Gemini analyzes exact gameplay telemetry—tile coordinates and adjacent mines—to generate spoken tactical advice or panicked warnings on the fly. 
 
-## 🧠 Approach and Logic
-Our approach was to physically separate the core mathematical engine (calculating adjacent mines and recursive flood-fills) from the user interface. By isolating the game state, we could perfectly parse player telemetry on every single click. 
+## ⚙️ Optimization & Resilience
+*   **Lifelines**: Ask Gemini to analyze an unrevealed tile, risking accurate intel or "signal interference."
+*   **Fail-Safe**: If API limits hit, the game instantly falls back to local dialogue algorithms. We utilized the native **Web Speech API** for voice generation, keeping the bundle tiny and fast.
 
-Instead of pre-written generic dialogue, we feed this exact gameplay telemetry (e.g., "The player clicked a safe tile, but there are 4 adjacent mines") directly into the `google's generative ai` SDK. Gemini then acts as a live "Field Commander," dynamically generating spoken tactical advice or panicked warnings based on the real-time mathematical danger.
+## 🚀 Google Cloud Ecosystem
+*   **Google Cloud Run**: Serverless Node.js backend serving both the UI and secure ML APIs from a single scalable origin.
+*   **Firebase Firestore**: Powering the global "Hall of Fame" leaderboard with real-time score synchronization.
+*   **Google Cloud Logging**: Integrated system observability for real-time monitoring of AI responses and tactical telemetry.
+
+*The mines are buried, but with Gemini, defusing them is infinitely cinematic.* 💣🚁
+
+---
+
 
 ## ⚙️ How the Solution Works
 1. **Frontend Interface**: A responsive, 100% ARIA-accessible React app running on Vite. It includes the complete visual overhaul into a CRTs/military terminal aesthetic.
