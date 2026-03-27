@@ -150,6 +150,7 @@ export default function App() {
 
     setVictorySpeech(mainSpeech);
     setVictoryTitle(`★ ${title} ★`);
+    audio.speakRex(mainSpeech, personality, true);
   }, [timer, audio, rex, personality, totalSafeTiles, flagsUsed]);
 
   // ─── Handle Explosion ───────────────────────────────────
@@ -201,6 +202,7 @@ export default function App() {
       : "That rookie had guts. More guts than brains, but guts nonetheless. The field claims another.");
 
     setGameOverEulogy(eulogyText);
+    audio.speakRex(eulogyText, personality, true);
   }, [timer, audio, rex, personality, config]);
 
   // ─── Reveal Tile ─────────────────────────────────────────
