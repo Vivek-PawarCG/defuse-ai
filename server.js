@@ -34,13 +34,13 @@ const originalConsoleError = console.error;
 console.log = (...args) => {
   const text = args.join(' ');
   originalConsoleLog(text);
-  log.write(log.entry({ severity: 'INFO' }, text)).catch(() => {});
+  log.write(log.entry({ severity: 'INFO' }, text)).catch(() => { });
 };
 
 console.error = (...args) => {
   const text = args.join(' ');
   originalConsoleError(text);
-  log.write(log.entry({ severity: 'ERROR' }, text)).catch(() => {});
+  log.write(log.entry({ severity: 'ERROR' }, text)).catch(() => { });
 };
 
 // ─── Cloud Secret Manager Logic ──────────────────────────────
@@ -67,7 +67,7 @@ async function getGeminiKey() {
 }
 
 // ─── Security & Efficiency Middleware ────────────────────────
-// Hardened CSP for Hackathon 95%+ Security score
+// Hardened CSP 
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -75,7 +75,7 @@ app.use(helmet({
       scriptSrc: ["'self'", "'unsafe-inline'", "https://apis.google.com", "https://www.gstatic.com", "https://*.firebaseapp.com", "https://www.googletagmanager.com", "https://*.google-analytics.com", "https://www.google.com"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       imgSrc: ["'self'", "data:", "https://*.google-analytics.com", "https://*.googletagmanager.com"],
-      connectSrc: ["'self'", "https://generativelanguage.googleapis.com", "https://*.firebaseio.com", "https://*.googleapis.com", "https://*.google-analytics.com"],
+      connectSrc: ["'self'", "https://generativelanguage.googleapis.com", "https://*.firebaseio.com", "https://*.googleapis.com", "https://*.google-analytics.com", "https://www.google.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       frameSrc: ["'self'", "https://www.google.com", "https://*.firebaseapp.com"],
       objectSrc: ["'none'"],
