@@ -84,6 +84,7 @@ For our 2026 hackathon submission, we pushed for near-perfect scores across five
 - **Observability**: Custom Google Cloud Monitoring metrics for AI latency and request volume.
 *   **Firebase Ecosystem**: Firestore high-scores, Google Analytics telemetry, and **App Check (reCaptcha v3)**.
 *   **Google Cloud Platform**: Cloud Run (compute), **Cloud Monitoring (Custom Metrics)**, Cloud Logging (observability), and Secret Manager (security).
+*   **Enterprise Identity**: Zero-Key authentication using **Application Default Credentials (ADC)** and custom **Service Accounts** for secure internal service-to-service communication.
 
 ---
 
