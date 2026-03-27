@@ -25,7 +25,7 @@ graph TD
     end
 
     subgraph "Google Cloud Ecosystem"
-        GEM[Gemini 1.5/2.5 Flash]
+        GEM[Gemini 2.5/3.1 Flash]
         DB[(Firebase Firestore)]
         SM[Secret Manager]
         LOG[Cloud Logging]
