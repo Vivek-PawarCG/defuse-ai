@@ -1,5 +1,6 @@
-import { Agent, Tool } from '@google/adk';
+import { Agent, Tool } from './Agency.js';
 import { BigQuery } from '@google-cloud/bigquery';
+import { VertexAI } from '@google-cloud/vertexai';
 
 /**
  * Tactical Intel Tool.
@@ -27,12 +28,11 @@ class BigQueryTool extends Tool {
       ORDER BY timestamp DESC 
       LIMIT @limit
     `;
-    const options = {
-      query,
-      params: { limit: parseInt(limit) }
-    };
     try {
-      const [rows] = await this.bigquery.query(options);
+      const [rows] = await this.bigquery.query({
+        query,
+        params: { limit: parseInt(limit) }
+      });
       return JSON.stringify(rows);
     } catch (err) {
       return `Error querying archives: ${err.message}`;
@@ -42,25 +42,24 @@ class BigQueryTool extends Tool {
 
 /**
  * Major Steele Agent.
- * An Agentic Intelligence Officer built with the Google Cloud ADK.
+ * An Agentic Intelligence Officer built with a custom lightweight framework
+ * powered by the Official Google Cloud Vertex AI SDK.
  */
-export function createSteeleAgent(projectId, apiKey) {
-  const agentOptions = {
+export function createSteeleAgent(projectId) {
+  // Initialize Vertex AI
+  // This natively supports Service Accounts/ADC if apiKey is null!
+  const vertex_ai = new VertexAI({ project: projectId, location: 'us-central1' });
+
+  const agent = new Agent({
     name: 'Major Steele',
     description: 'A strategic intelligence officer specializing in data-driven bomb disposal analysis.',
     instruction: `You are Major Steele, the Strategic Intelligence Officer for the Defuse AI project.
     Your tone is professional, authoritative, and data-focused.
-    You have access to the mission archives (BigQuery). When asked about performance, use your tools to query data before responding.
-    Don't just give numbers; interpret them for the soldier. (e.g., "Your survival time on Legend difficulty is improving, keep it up").`,
-    model: 'gemini-2.5-flash-lite'
-  };
+    You analyze mission history to provide strategic advice. Mention specific trends if you see them.`,
+    model: 'gemini-2.5-flash-lite',
+    client: vertex_ai
+  });
 
-  // Use API key if provided, otherwise the SDK looks for GOOGLE_APPLICATION_CREDENTIALS
-  if (apiKey) {
-    agentOptions.apiKey = apiKey;
-  }
-
-  const agent = new Agent(agentOptions);
   agent.addTool(new BigQueryTool(projectId));
   return agent;
 }
