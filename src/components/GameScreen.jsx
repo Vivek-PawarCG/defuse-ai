@@ -1,0 +1,88 @@
+import React from 'react';
+import { TILE_SIZE_MAP } from '../utils/constants.js';
+import TopBar from './TopBar.jsx';
+import MinesweeperGrid from './MinesweeperGrid.jsx';
+import RexPanel from './RexPanel.jsx';
+import GameOverOverlay from './GameOverOverlay.jsx';
+import VictoryOverlay from './VictoryOverlay.jsx';
+
+export default function GameScreen({
+  board, rows, cols, difficulty, minesRemaining, tilesRevealed, totalSafeTiles,
+  time, gameOver, firstClick, personality, voiceEnabled, heatmapEnabled, heatmapData,
+  autoSolving, lifelineUsed, missedFlags, shakeClass,
+  showGameOver, gameOverTitle, gameOverEulogy, gameOverStats,
+  showVictory, victorySpeech, victoryTitle, victoryStats,
+  rexMessages, rexLoading,
+  onRevealTile, onFlagTile, onSwitchDifficulty, onSwitchPersonality,
+  onToggleVoice, onToggleHeatmap, onAutoSolve, onSurrender,
+  onSendLifeline, onRetry, onReviewBoard, onReturnToBase,
+  onNextMission, onDismissVictory,
+}) {
+  return (
+    <div id="game-screen" className={`screen active ${shakeClass}`}>
+      <div className="scanline-overlay"></div>
+
+      <TopBar
+        minesRemaining={minesRemaining}
+        time={time}
+        difficulty={difficulty}
+        personality={personality}
+        voiceEnabled={voiceEnabled}
+        heatmapEnabled={heatmapEnabled}
+        gameOver={gameOver}
+        onSwitchDifficulty={onSwitchDifficulty}
+        onSwitchPersonality={onSwitchPersonality}
+        onToggleVoice={onToggleVoice}
+        onToggleHeatmap={onToggleHeatmap}
+        onAutoSolve={onAutoSolve}
+        onSurrender={onSurrender}
+      />
+
+      <main id="game-main">
+        <section id="grid-panel">
+          <MinesweeperGrid
+            board={board}
+            rows={rows}
+            cols={cols}
+            difficulty={difficulty}
+            heatmapEnabled={heatmapEnabled}
+            heatmapData={heatmapData}
+            gameOver={gameOver}
+            missedFlags={missedFlags}
+            onRevealTile={onRevealTile}
+            onFlagTile={onFlagTile}
+          />
+        </section>
+
+        <RexPanel
+          messages={rexMessages}
+          loading={rexLoading}
+          lifelineUsed={lifelineUsed}
+          gameOver={gameOver}
+          onSendLifeline={onSendLifeline}
+        />
+
+        {showGameOver && (
+          <GameOverOverlay
+            title={gameOverTitle}
+            eulogy={gameOverEulogy}
+            stats={gameOverStats}
+            onRetry={onRetry}
+            onReviewBoard={onReviewBoard}
+            onReturnToBase={onReturnToBase}
+          />
+        )}
+
+        {showVictory && (
+          <VictoryOverlay
+            speech={victorySpeech}
+            title={victoryTitle}
+            stats={victoryStats}
+            onNextMission={onNextMission}
+            onReviewBoard={onDismissVictory}
+          />
+        )}
+      </main>
+    </div>
+  );
+}

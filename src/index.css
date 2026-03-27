@@ -1,5 +1,6 @@
 /* ═══════════════════════════════════════════════════
    DEFUSE — MILITARY TERMINAL THEME
+   Ported from vanilla CSS to React/Vite
    ═══════════════════════════════════════════════════ */
 
 /* ─── CSS VARIABLES ─────────────────────────────── */
@@ -36,7 +37,8 @@
 }
 
 html,
-body {
+body,
+#root {
     width: 100%;
     height: 100%;
     background: var(--bg);
@@ -69,6 +71,7 @@ body {
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    overflow-y: auto;
 }
 
 .screen.active {
@@ -106,14 +109,21 @@ body {
 #briefing-screen {
     background: var(--bg);
     position: relative;
+    overflow-y: auto;
+    justify-content: safe center;
 }
 
-/* Radio static canvas */
 .static-canvas {
-    position: absolute;
+    position: fixed;
     inset: 0;
     opacity: 0.06;
     z-index: 0;
+    font-family: monospace;
+    font-size: 14px;
+    line-height: 1;
+    color: rgba(0, 255, 65, 0.15);
+    word-break: break-all;
+    overflow: hidden;
 }
 
 .briefing-content {
@@ -122,6 +132,7 @@ body {
     padding: 2rem;
     max-width: 700px;
     width: 100%;
+    flex-shrink: 0;
 }
 
 .title-defuse {
@@ -182,7 +193,7 @@ body {
 .briefing-header {
     display: flex;
     align-items: center;
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     color: var(--green-dim);
     letter-spacing: 0.15em;
     text-transform: uppercase;
@@ -193,7 +204,7 @@ body {
 
 .typewriter-text {
     font-family: var(--font-mono);
-    font-size: 0.95rem;
+    font-size: 0.60rem;
     line-height: 1.7;
     color: var(--green);
     min-height: 4em;
@@ -372,6 +383,7 @@ body {
     overflow-y: auto;
     overflow-x: hidden;
     min-height: 0;
+    position: relative;
 }
 
 /* ─── GRID PANEL ────────────────────────────────── */
@@ -393,8 +405,6 @@ body {
 
 /* ─── TILES ─────────────────────────────────────── */
 .tile {
-    width: 38px;
-    height: 38px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -747,28 +757,20 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════
-   EXPLOSION SCREEN
+   GAME OVER OVERLAY
    ═══════════════════════════════════════════════════ */
 
-#explosion-screen {
-    background: var(--bg);
-}
-
-#explosion-screen.surrender-overlay {
-    background: rgba(5, 5, 5, 0.85);
-    z-index: 90;
-}
-
-/* ─── INLINE GAME OVER OVERLAY ──────────────────── */
 .gameover-overlay {
-    position: absolute;
+    position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.7);
     z-index: 80;
     display: flex;
     align-items: center;
     justify-content: center;
     animation: fadeIn 0.5s ease-out;
+    overflow-y: auto;
+    padding: 1rem;
 }
 
 @keyframes fadeIn {
@@ -782,19 +784,21 @@ body {
 }
 
 .gameover-panel {
-    background: rgba(10, 10, 10, 0.95);
+    background: rgba(10, 10, 10, 0.97);
     border: 2px solid var(--red);
     box-shadow: 0 0 40px rgba(255, 42, 42, 0.3), inset 0 0 30px rgba(0, 0, 0, 0.5);
-    padding: 2rem 3rem;
+    padding: 1.5rem 2rem;
     text-align: center;
-    max-width: 500px;
-    width: 90%;
-    animation: stamp-in 0.4s ease-out;
+    max-width: 460px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: panel-pop 0.4s ease-out;
 }
 
 .gameover-title {
     font-family: var(--font-heading);
-    font-size: clamp(1.8rem, 5vw, 2.8rem);
+    font-size: clamp(1.4rem, 4vw, 2.2rem);
     font-weight: 700;
     color: var(--red);
     letter-spacing: 0.15em;
@@ -803,154 +807,82 @@ body {
     transform: rotate(-3deg);
     border: 3px solid var(--red);
     display: inline-block;
-    padding: 0.2rem 1.2rem;
-    margin-bottom: 1rem;
+    padding: 0.15rem 1rem;
+    margin-bottom: 0.8rem;
 }
 
 .gameover-eulogy {
     font-family: var(--font-mono);
-    font-size: 0.85rem;
-    line-height: 1.7;
+    font-size: 0.8rem;
+    line-height: 1.6;
     color: var(--text);
-    margin-bottom: 1rem;
-    min-height: 3em;
+    margin-bottom: 0.8rem;
+    min-height: 2em;
 }
 
 .gameover-stats {
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: var(--text-dim);
     letter-spacing: 0.1em;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
 }
 
 .gameover-buttons {
     display: flex;
-    gap: 1rem;
+    gap: 0.6rem;
     justify-content: center;
     flex-wrap: wrap;
 }
 
-.explosion-flash {
-    position: fixed;
-    inset: 0;
-    background: var(--red);
-    opacity: 0;
-    pointer-events: none;
-    z-index: 200;
-}
-
-.explosion-flash.active {
-    animation: red-flash 0.8s ease-out forwards;
-}
-
-@keyframes red-flash {
-    0% {
-        opacity: 0.9;
-    }
-
-    100% {
-        opacity: 0;
-    }
-}
-
-.explosion-content {
-    z-index: 10;
-    text-align: center;
-    padding: 2rem;
-    max-width: 600px;
-}
-
-.soldier-silhouette {
-    width: 120px;
-    height: 180px;
-    margin: 0 auto 1.5rem;
-    background: radial-gradient(ellipse at center, rgba(255, 32, 32, 0.15) 0%, transparent 70%);
-    border-radius: 50% 50% 0 0;
-    opacity: 0;
-    animation: silhouette-fade 2s ease-in forwards 1s;
-}
-
-@keyframes silhouette-fade {
-    0% {
-        opacity: 0;
-    }
-
-    100% {
-        opacity: 1;
-    }
-}
-
-.stamp-failed {
-    font-family: var(--font-heading);
-    font-size: clamp(2.5rem, 8vw, 4.5rem);
-    font-weight: 700;
-    color: var(--red);
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    text-shadow: 0 0 30px var(--red-glow);
-    transform: rotate(-5deg);
-    border: 4px solid var(--red);
-    display: inline-block;
-    padding: 0.3rem 1.5rem;
-    margin-bottom: 1.5rem;
-    animation: stamp-in 0.4s ease-out;
+.gameover-buttons .btn-military {
+    font-size: 0.85rem;
+    padding: 0.6rem 1.5rem;
 }
 
 @keyframes stamp-in {
     0% {
-        transform: rotate(-5deg) scale(3);
+        transform: scale(3);
         opacity: 0;
     }
 
     70% {
-        transform: rotate(-5deg) scale(0.95);
+        transform: scale(0.95);
     }
 
     100% {
-        transform: rotate(-5deg) scale(1);
+        transform: scale(1);
         opacity: 1;
     }
 }
 
-.eulogy-text {
-    font-family: var(--font-mono);
-    font-size: 0.9rem;
-    line-height: 1.8;
-    color: var(--text);
-    margin-bottom: 1.5rem;
-    min-height: 5em;
-}
+@keyframes panel-pop {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
 
-.explosion-stats,
-.victory-stats {
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    color: var(--text-dim);
-    margin-bottom: 1.5rem;
-    line-height: 1.8;
-}
-
-.explosion-buttons {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    flex-wrap: wrap;
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 /* ═══════════════════════════════════════════════════
-   VICTORY SCREEN
+   VICTORY OVERLAY
    ═══════════════════════════════════════════════════ */
 
 .victory-overlay {
-    position: absolute;
+    position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.7);
     z-index: 80;
     display: flex;
     align-items: center;
     justify-content: center;
     animation: fadeIn 0.5s ease-out;
+    overflow-y: auto;
+    padding: 1rem;
 }
 
 .victory-pulse {
@@ -976,7 +908,7 @@ body {
     }
 }
 
-#confetti-canvas {
+.confetti-canvas {
     position: fixed;
     inset: 0;
     pointer-events: none;
@@ -984,50 +916,65 @@ body {
 }
 
 .victory-panel {
-    background: rgba(10, 10, 10, 0.95);
+    background: rgba(10, 10, 10, 0.97);
     border: 2px solid var(--gold);
     box-shadow: 0 0 40px rgba(255, 215, 0, 0.3), inset 0 0 30px rgba(0, 0, 0, 0.5);
-    padding: 2rem 3rem;
+    padding: 1.5rem 2rem;
     text-align: center;
-    max-width: 550px;
-    width: 90%;
-    animation: stamp-in 0.4s ease-out;
+    max-width: 480px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: panel-pop 0.4s ease-out;
     z-index: 90;
 }
 
 .stamp-cleared {
     font-family: var(--font-heading);
-    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    font-size: clamp(1.8rem, 6vw, 3.5rem);
     font-weight: 700;
     color: var(--green);
     letter-spacing: 0.15em;
     text-transform: uppercase;
     text-shadow: 0 0 30px rgba(0, 255, 65, 0.5);
-    border: 4px solid var(--green);
+    border: 3px solid var(--green);
     display: inline-block;
-    padding: 0.3rem 1.5rem;
-    margin-bottom: 1.5rem;
+    padding: 0.2rem 1rem;
+    margin-bottom: 1rem;
     animation: stamp-in 0.4s ease-out;
 }
 
 .victory-speech {
     font-family: var(--font-mono);
-    font-size: 0.9rem;
-    line-height: 1.8;
+    font-size: 0.85rem;
+    line-height: 1.7;
     color: var(--green);
-    margin-bottom: 1rem;
-    min-height: 4em;
+    margin-bottom: 0.8rem;
+    min-height: 3em;
 }
 
 .legendary-title {
     font-family: var(--font-heading);
-    font-size: 1.8rem;
+    font-size: 1.5rem;
     font-weight: 700;
     color: var(--gold);
     text-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
     letter-spacing: 0.1em;
-    margin-bottom: 1.5rem;
-    min-height: 2em;
+    margin-bottom: 1rem;
+    min-height: 1.5em;
+}
+
+.victory-stats {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-bottom: 1rem;
+    line-height: 1.7;
+}
+
+.victory-overlay .gameover-buttons .btn-military {
+    font-size: 0.85rem;
+    padding: 0.6rem 1.5rem;
 }
 
 /* ─── GRID COORDINATE LABELS ────────────────────── */
@@ -1041,8 +988,6 @@ body {
     letter-spacing: 0.05em;
     user-select: none;
 }
-
-/* grid-corner: intentionally unstyled */
 
 .grid-col-label {
     color: var(--green-dim);
@@ -1090,20 +1035,15 @@ body {
     font-size: 0.65rem;
     font-weight: 600;
     letter-spacing: 0.1em;
-    padding: 0 0.5rem;
-    width: auto;
+    padding: 0.3rem 0.6rem;
+    width: auto !important;
+    height: auto !important;
+    white-space: nowrap;
 }
 
 .btn-solve:hover {
     color: var(--bg);
     background: var(--yellow);
-}
-
-.btn-solve:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-    background: transparent;
-    color: var(--yellow);
 }
 
 .btn-surrender {
@@ -1113,8 +1053,10 @@ body {
     font-size: 0.65rem;
     font-weight: 600;
     letter-spacing: 0.1em;
-    padding: 0 0.5rem;
-    width: auto;
+    padding: 0.3rem 0.6rem;
+    width: auto !important;
+    height: auto !important;
+    white-space: nowrap;
 }
 
 .btn-surrender:hover {
@@ -1123,16 +1065,10 @@ body {
     box-shadow: 0 0 10px var(--red);
 }
 
-.btn-surrender:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-    background: transparent;
-    color: var(--red);
-}
-
 .ai-controls .btn-solve,
 .ai-controls .btn-surrender {
     width: auto !important;
+    height: auto !important;
 }
 
 /* ─── HEATMAP BUTTON ────────────────────────────── */
@@ -1143,9 +1079,11 @@ body {
     font-size: 0.65rem;
     font-weight: 600;
     letter-spacing: 0.1em;
-    padding: 0 0.5rem;
-    width: auto;
+    padding: 0.3rem 0.6rem;
+    width: auto !important;
+    height: auto !important;
     transition: all 0.2s;
+    white-space: nowrap;
 }
 
 .btn-heatmap:hover {
@@ -1214,6 +1152,18 @@ body {
     transition: all 0.2s;
     margin-left: 0.5rem;
     border-radius: 2px;
+    white-space: nowrap;
+}
+
+/* Text buttons in toolbar need auto width */
+.btn-settings.btn-solve,
+.btn-settings.btn-heatmap,
+.btn-settings.btn-surrender {
+    width: auto;
+    height: auto;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.65rem;
+    gap: 0.25rem;
 }
 
 .btn-settings:hover {
@@ -1221,7 +1171,7 @@ body {
     border-color: var(--green);
 }
 
-/* ─── API KEY MODAL ─────────────────────────────── */
+/* ─── MODAL OVERLAY ─────────────────────────────── */
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -1257,42 +1207,6 @@ body {
     border-bottom: 1px solid rgba(0, 255, 65, 0.1);
 }
 
-.modal-desc {
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    color: var(--text-dim);
-    line-height: 1.6;
-    margin-bottom: 1rem;
-}
-
-.modal-input-row {
-    display: flex;
-    gap: 0.4rem;
-}
-
-.modal-input-row input {
-    flex: 1;
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    padding: 0.5rem 0.7rem;
-    background: rgba(0, 0, 0, 0.5);
-    color: var(--green);
-    border: 1px solid rgba(0, 255, 65, 0.2);
-    outline: none;
-}
-
-.modal-input-row input:focus {
-    border-color: var(--green);
-}
-
-/* ─── FIELD MANUAL MODAL ────────────────────────── */
-.manual-box {
-    max-width: 600px;
-    max-height: 85vh;
-    display: flex;
-    flex-direction: column;
-}
-
 .btn-close-modal {
     background: transparent;
     color: var(--red);
@@ -1306,6 +1220,13 @@ body {
 .btn-close-modal:hover {
     color: var(--red-glow);
     text-shadow: 0 0 10px var(--red);
+}
+
+.manual-box {
+    max-width: 600px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .manual-content {
@@ -1380,7 +1301,6 @@ body {
    RESPONSIVE
    ═══════════════════════════════════════════════════ */
 
-/* Large screens — tighten up */
 @media (max-height: 800px) {
     #game-main {
         padding: 0.5rem 1rem;
@@ -1390,9 +1310,21 @@ body {
     .tile {
         font-size: 0.9rem;
     }
+
+    .gameover-panel,
+    .victory-panel {
+        padding: 1rem 1.5rem;
+    }
+
+    .gameover-title {
+        font-size: clamp(1.2rem, 3.5vw, 1.8rem);
+    }
+
+    .stamp-cleared {
+        font-size: clamp(1.5rem, 5vw, 2.5rem);
+    }
 }
 
-/* Tablets & narrow desktops */
 @media (max-width: 1200px) {
     #rex-panel {
         width: 280px;
@@ -1409,7 +1341,6 @@ body {
     }
 }
 
-/* Stack layout vertically */
 @media (max-width: 900px) {
     #game-main {
         flex-direction: column;
@@ -1442,12 +1373,16 @@ body {
 
     .top-bar-center {
         display: none;
-        /* Hide the DEFUSE title to save space */
     }
 
     .top-bar-left,
     .top-bar-right {
         gap: 0.5rem;
+    }
+
+    .top-bar-right {
+        flex-wrap: wrap;
+        justify-content: flex-end;
     }
 
     .game-title-small {
@@ -1469,14 +1404,20 @@ body {
         font-size: 0.55rem;
     }
 
-    .btn-solve,
-    .btn-surrender {
+    .btn-settings.btn-solve,
+    .btn-settings.btn-surrender,
+    .btn-settings.btn-heatmap {
         font-size: 0.6rem;
-        padding: 0.3rem 0.6rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+    .gameover-panel,
+    .victory-panel {
+        max-width: 90vw;
+        padding: 1.2rem 1.5rem;
     }
 }
 
-/* Small tablets / large phones */
 @media (max-width: 768px) {
     .briefing-content {
         padding: 1.2rem;
@@ -1484,46 +1425,56 @@ body {
 
     .title-defuse {
         letter-spacing: 0.15em;
+        font-size: clamp(3rem, 10vw, 6rem);
     }
 
     .briefing-box {
         padding: 1rem;
     }
 
-    .explosion-content,
-    .victory-content {
-        padding: 1.2rem;
-    }
-
-    .stamp-failed,
     .stamp-cleared {
-        font-size: clamp(2rem, 7vw, 3.5rem);
-        padding: 0.2rem 1rem;
+        font-size: clamp(1.5rem, 6vw, 2.8rem);
+        padding: 0.2rem 0.8rem;
     }
 
     .btn-military {
-        font-size: 0.9rem;
-        padding: 0.7rem 1.5rem;
+        font-size: 0.85rem;
+        padding: 0.6rem 1.2rem;
+    }
+
+    .gameover-title {
+        font-size: clamp(1.2rem, 4vw, 1.8rem);
+        padding: 0.15rem 0.8rem;
+    }
+
+    .gameover-buttons .btn-military {
+        font-size: 0.75rem;
+        padding: 0.5rem 1rem;
+    }
+
+    .legendary-title {
+        font-size: 1.2rem;
+    }
+
+    .ai-controls {
+        gap: 0.3rem;
     }
 }
 
-/* Phones */
 @media (max-width: 480px) {
     .tile {
-        width: 36px;
-        height: 36px;
         font-size: 0.85rem;
     }
 
     .title-defuse {
         letter-spacing: 0.1em;
-        font-size: clamp(3rem, 10vw, 5rem);
+        font-size: clamp(2.5rem, 10vw, 4rem);
     }
 
     .subtitle {
-        font-size: 0.65rem;
-        letter-spacing: 0.2em;
-        margin-bottom: 1.5rem;
+        font-size: 0.6rem;
+        letter-spacing: 0.15em;
+        margin-bottom: 1.2rem;
     }
 
     .briefing-content {
@@ -1532,39 +1483,57 @@ body {
 
     .briefing-box {
         padding: 0.75rem;
+        margin-bottom: 1rem;
     }
 
     .typewriter-text {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
+        min-height: 3em;
     }
 
     .btn-military {
-        font-size: 0.8rem;
-        padding: 0.6rem 1.2rem;
+        font-size: 0.75rem;
+        padding: 0.5rem 1rem;
         letter-spacing: 0.1em;
     }
 
-    .explosion-buttons {
-        flex-direction: column;
-    }
-
-    .explosion-buttons .btn-military {
-        width: 100%;
-    }
-
-    .stamp-failed,
     .stamp-cleared {
-        font-size: clamp(1.8rem, 6vw, 3rem);
+        font-size: clamp(1.3rem, 5vw, 2rem);
+        border-width: 2px;
     }
 
-    .eulogy-text,
     .victory-speech {
-        font-size: 0.8rem;
-        line-height: 1.6;
+        font-size: 0.75rem;
+        line-height: 1.5;
     }
 
     .legendary-title {
-        font-size: 1.3rem;
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .gameover-panel,
+    .victory-panel {
+        padding: 1rem;
+    }
+
+    .gameover-title {
+        font-size: clamp(1rem, 3.5vw, 1.5rem);
+        border-width: 2px;
+    }
+
+    .gameover-eulogy {
+        font-size: 0.7rem;
+    }
+
+    .gameover-stats,
+    .victory-stats {
+        font-size: 0.65rem;
+    }
+
+    .gameover-buttons .btn-military {
+        font-size: 0.7rem;
+        padding: 0.45rem 0.8rem;
     }
 
     #top-bar {
@@ -1588,7 +1557,7 @@ body {
     }
 
     #rex-panel {
-        max-height: 200px;
+        max-height: 180px;
     }
 
     .rex-header {
@@ -1606,32 +1575,78 @@ body {
     }
 
     .btn-lifeline {
-        font-size: 0.65rem;
-        padding: 0.45rem 0.6rem;
+        font-size: 0.6rem;
+        padding: 0.35rem 0.5rem;
     }
 
     .btn-settings {
-        width: 28px;
-        height: 28px;
-        font-size: 1rem;
+        width: 26px;
+        height: 26px;
+        font-size: 0.9rem;
     }
-}
 
-/* Very small phones */
-@media (max-width: 360px) {
-    .tile {
-        width: 32px;
-        height: 32px;
-        font-size: 0.75rem;
+    .btn-settings.btn-solve,
+    .btn-settings.btn-heatmap,
+    .btn-settings.btn-surrender {
+        font-size: 0.55rem;
+        padding: 0.2rem 0.4rem;
+    }
+
+    .ai-controls {
+        gap: 0.25rem;
+        margin-right: 0.3rem;
+        padding-right: 0.3rem;
+    }
+
+    .rex-select {
+        font-size: 0.55rem;
+        padding: 0.25rem;
+    }
+
+    .difficulty-selector {
+        gap: 2px;
     }
 
     .diff-btn {
         padding: 0.2rem 0.35rem;
         font-size: 0.5rem;
     }
+}
+
+@media (max-width: 360px) {
+    .tile {
+        font-size: 0.75rem;
+    }
+
+    .diff-btn {
+        padding: 0.15rem 0.25rem;
+        font-size: 0.45rem;
+    }
 
     .grid {
         padding: 2px;
         gap: 1px;
+    }
+
+    .title-defuse {
+        font-size: clamp(2rem, 8vw, 3rem);
+    }
+
+    .btn-military {
+        font-size: 0.7rem;
+        padding: 0.4rem 0.8rem;
+    }
+
+    .gameover-panel,
+    .victory-panel {
+        padding: 0.8rem;
+    }
+
+    .stamp-cleared {
+        font-size: 1.2rem;
+    }
+
+    .gameover-title {
+        font-size: 1rem;
     }
 }
