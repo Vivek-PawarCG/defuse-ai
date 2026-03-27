@@ -4,8 +4,9 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// Import our standalone Vercel Serverless Function
+// Import our standalone Vercel Serverless Functions
 import chatHandler from './api/gemini/chat.js';
+import healthHandler from './api/health.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,9 +21,7 @@ app.use(express.json());
 app.post('/api/gemini/chat', chatHandler);
 
 // ─── Health check ──────────────────────────────────────────
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', model: process.env.GEMINI_MODEL || 'gemini-2.5-flash', hasKey: !!process.env.GEMINI_API_KEY });
-});
+app.get('/api/health', healthHandler);
 
 // Serve the statically compiled Vite frontend
 const distPath = path.join(__dirname, 'dist');
