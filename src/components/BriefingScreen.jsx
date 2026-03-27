@@ -26,11 +26,12 @@ function Typewriter({ text, speed = 30, onComplete }) {
   return <span className={done ? '' : 'typewriter-cursor'}>{displayed}</span>;
 }
 
-export default function BriefingScreen({ onEnterField, apiReady, personality, speakRex }) {
+export default function BriefingScreen({ onEnterField, onOpenCommandCenter, apiReady, personality, speakRex }) {
   const [briefingText, setBriefingText] = useState('');
   const [showButton, setShowButton] = useState(false);
   const [loading, setLoading] = useState(true);
   const [transmissionAccepted, setTransmissionAccepted] = useState(false);
+  const [showManual, setShowManual] = useState(false);
   const staticRef = useRef(null);
   const animRef = useRef(null);
 
@@ -91,6 +92,12 @@ export default function BriefingScreen({ onEnterField, apiReady, personality, sp
       <div className="briefing-content">
         <h1 className="title-defuse">DEFUSE</h1>
         <p className="subtitle">BOMB DISPOSAL TRAINING - FIELD EXERCISE</p>
+        <div className="btn-group">
+          <button className="btn-military primary-btn pulse" onClick={onStartGame}>INITIALIZE DEPLOYMENT</button>
+          <button className="btn-military secondary-btn" onClick={onOpenCommandCenter}>ENTER COMMAND CENTER</button>
+          {/* Assuming setShowManual is defined elsewhere or passed as prop */}
+          {/* <button className="btn-military secondary-btn" onClick={() => setShowManual(true)}>FIELD MANUAL</button> */}
+        </div>
         <div className="briefing-box">
           <div className="briefing-header">
             <span className="blink-dot"></span>

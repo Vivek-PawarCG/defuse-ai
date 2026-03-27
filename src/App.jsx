@@ -10,15 +10,24 @@ import { checkHealth } from './utils/api.js';
 import { useTimer } from './hooks/useTimer.js';
 import { useAudio } from './hooks/useAudio.js';
 import { useRex } from './hooks/useRex.js';
-import { trackEvent } from './utils/analytics.js';
+import VictoryOverlay from './components/VictoryOverlay.jsx';
+import FieldManual from './components/FieldManual.jsx';
+import CommandCenter from './components/CommandCenter.jsx';
+import ErrorBoundary from './components/ErrorBoundary.jsx';
 import BriefingScreen from './components/BriefingScreen.jsx';
 import GameScreen from './components/GameScreen.jsx';
 
 const INITIAL_DIFFICULTY = 'rookie';
 
+const SCREENS = {
+  BRIEFING: 'briefing',
+  GAME: 'game',
+  COMMAND_CENTER: 'command-center'
+};
+
 export default function App() {
   // ─── Screen state ────────────────────────────────────────
-  const [screen, setScreen] = useState('briefing'); // 'briefing' | 'game'
+  const [screen, setScreen] = useState(SCREENS.BRIEFING); // 'briefing' | 'game' | 'command-center'
 
   // ─── Game state ──────────────────────────────────────────
   const [difficulty, setDifficulty] = useState(INITIAL_DIFFICULTY);
@@ -57,6 +66,28 @@ export default function App() {
   const tilesRevealedRef = useRef(0);
   const firstClickRef = useRef(true);
   const minesRemainingRef = useRef(config.mines);
+  const aiAdviceCountRef = useRef(0); // Added this ref for archiveMission
+
+  /**
+   * Archive mission data to BigQuery via the backend proxy.
+   */
+  const archiveMission = useCallback(async (result) => {
+    try {
+      await fetch('/api/archive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          difficulty,
+          result,
+          timeSpent: timer.time,
+          tilesCleared: tilesRevealedRef.current,
+          aiAdviceCount: aiAdviceCountRef.current || 0
+        })
+      });
+    } catch (err) {
+      console.error("Failed to archive mission", err);
+    }
+  }, [difficulty, timer.time]);
 
   // Keep refs in sync
   useEffect(() => { boardRef.current = board; }, [board]);
@@ -116,6 +147,7 @@ export default function App() {
     firstClickRef.current = true;
     tilesRevealedRef.current = 0;
     minesRemainingRef.current = cfg.mines;
+    aiAdviceCountRef.current = 0; // Reset AI advice count
 
     trackEvent('mission_start', { difficulty });
   }, [difficulty, timer]);
@@ -156,7 +188,8 @@ export default function App() {
     audio.speakRex(mainSpeech, personality, true);
 
     trackEvent('mission_success', { difficulty, time: timeVal, score: totalSafeTiles });
-  }, [timer, audio, rex, personality, totalSafeTiles, flagsUsed]);
+    archiveMission('success');
+  }, [timer, audio, rex, personality, totalSafeTiles, flagsUsed, archiveMission]);
 
   // ─── Handle Explosion ───────────────────────────────────
   const handleExplosion = useCallback(async (r, c, isSurrender = false, currentBoard) => {
@@ -209,8 +242,9 @@ export default function App() {
     setGameOverEulogy(eulogyText);
     audio.speakRex(eulogyText, personality, true);
 
-    trackEvent('mission_failed', { difficulty, time: timeVal, tilesCleared: tilesRevealedRef.current, surrendered: isSurrender });
-  }, [timer, audio, rex, personality, config]);
+    trackEvent('mission_failed', { difficulty, time: timeVal, result: isSurrender ? 'surrender' : 'explosion' });
+    archiveMission(isSurrender ? 'surrender' : 'fail');
+  }, [timer, audio, rex, personality, config, archiveMission]);
 
   // ─── Reveal Tile ─────────────────────────────────────────
   const revealTile = useCallback((r, c) => {
@@ -491,7 +525,7 @@ export default function App() {
 
   // ─── Enter Field (from briefing) ────────────────────────
   const enterField = useCallback(() => {
-    setScreen('game');
+    setScreen(SCREENS.GAME);
     resetGame();
     rex.addMessage("Channel open. I'm here with you, soldier. Take your first step.", "Game started");
   }, [resetGame, rex]);
@@ -499,7 +533,7 @@ export default function App() {
   // ─── Return to Base ─────────────────────────────────────
   const returnToBase = useCallback(() => {
     rex.clearMessages();
-    setScreen('briefing');
+    setScreen(SCREENS.BRIEFING);
   }, [rex]);
 
   // ─── Retry ──────────────────────────────────────────────
@@ -520,66 +554,86 @@ export default function App() {
   const dismissGameOver = useCallback(() => setShowGameOver(false), []);
   const dismissVictory = useCallback(() => setShowVictory(false), []);
 
-  // ─── Render ──────────────────────────────────────────────
-  if (screen === 'briefing') {
-    return (
-      <BriefingScreen 
-        onEnterField={enterField} 
-        apiReady={apiReady} 
-        personality={personality} 
-        speakRex={audio.speakRex} 
-      />
-    );
-  }
+  const renderScreen = () => {
+    switch (screen) {
+      case SCREENS.BRIEFING:
+        return (
+          <BriefingScreen
+            onEnterField={enterField}
+            apiReady={apiReady}
+            personality={personality}
+            speakRex={audio.speakRex}
+            onOpenCommandCenter={() => setScreen(SCREENS.COMMAND_CENTER)}
+          />
+        );
+      case SCREENS.GAME:
+        return (
+          <GameScreen
+            // Game state
+            board={board}
+            rows={config.rows}
+            cols={config.cols}
+            difficulty={difficulty}
+            minesRemaining={minesRemaining}
+            tilesRevealed={tilesRevealed}
+            totalSafeTiles={totalSafeTiles}
+            time={timer.time}
+            gameOver={gameOver}
+            firstClick={firstClick}
+            personality={personality}
+            voiceEnabled={voiceEnabled}
+            heatmapEnabled={heatmapEnabled}
+            heatmapData={heatmapData}
+            autoSolving={autoSolving}
+            lifelineUsed={lifelineUsed}
+            missedFlags={missedFlags}
+            shakeClass={shakeClass}
+            // Overlays
+            showGameOver={showGameOver}
+            gameOverTitle={gameOverTitle}
+            gameOverEulogy={gameOverEulogy}
+            gameOverStats={gameOverStats}
+            showVictory={showVictory}
+            victorySpeech={victorySpeech}
+            victoryTitle={victoryTitle}
+            victoryStats={victoryStats}
+            // Rex
+            rexMessages={rex.messages}
+            rexLoading={rex.loading}
+            // Actions
+            onRevealTile={revealTile}
+            onFlagTile={flagTile}
+            onSwitchDifficulty={switchDifficulty}
+            onSwitchPersonality={switchPersonality}
+            onToggleVoice={toggleVoice}
+            onToggleHeatmap={toggleHeatmap}
+            onAutoSolve={startAutoSolve}
+            onSurrender={handleSurrender}
+            onSendLifeline={sendLifeline}
+            onRetry={retry}
+            onReviewBoard={dismissGameOver}
+            onReturnToBase={returnToBase}
+            onNextMission={nextMission}
+            onDismissVictory={dismissVictory}
+          />
+        );
+      case SCREENS.COMMAND_CENTER:
+        return (
+          <CommandCenter
+            onReturnToMenu={() => setScreen(SCREENS.BRIEFING)}
+          />
+        );
+      default:
+        return null;
+    }
+  };
 
+  // ─── Render ──────────────────────────────────────────────
   return (
-    <GameScreen
-      // Game state
-      board={board}
-      rows={config.rows}
-      cols={config.cols}
-      difficulty={difficulty}
-      minesRemaining={minesRemaining}
-      tilesRevealed={tilesRevealed}
-      totalSafeTiles={totalSafeTiles}
-      time={timer.time}
-      gameOver={gameOver}
-      firstClick={firstClick}
-      personality={personality}
-      voiceEnabled={voiceEnabled}
-      heatmapEnabled={heatmapEnabled}
-      heatmapData={heatmapData}
-      autoSolving={autoSolving}
-      lifelineUsed={lifelineUsed}
-      missedFlags={missedFlags}
-      shakeClass={shakeClass}
-      // Overlays
-      showGameOver={showGameOver}
-      gameOverTitle={gameOverTitle}
-      gameOverEulogy={gameOverEulogy}
-      gameOverStats={gameOverStats}
-      showVictory={showVictory}
-      victorySpeech={victorySpeech}
-      victoryTitle={victoryTitle}
-      victoryStats={victoryStats}
-      // Rex
-      rexMessages={rex.messages}
-      rexLoading={rex.loading}
-      // Actions
-      onRevealTile={revealTile}
-      onFlagTile={flagTile}
-      onSwitchDifficulty={switchDifficulty}
-      onSwitchPersonality={switchPersonality}
-      onToggleVoice={toggleVoice}
-      onToggleHeatmap={toggleHeatmap}
-      onAutoSolve={startAutoSolve}
-      onSurrender={handleSurrender}
-      onSendLifeline={sendLifeline}
-      onRetry={retry}
-      onReviewBoard={dismissGameOver}
-      onReturnToBase={returnToBase}
-      onNextMission={nextMission}
-      onDismissVictory={dismissVictory}
-    />
+    <ErrorBoundary>
+      <div className="app-container">
+        {renderScreen()}
+      </div>
+    </ErrorBoundary>
   );
 }

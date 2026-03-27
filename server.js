@@ -8,7 +8,9 @@ import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import { Logging } from '@google-cloud/logging';
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
+import { BigQuery } from '@google-cloud/bigquery';
 import monitoring from '@google-cloud/monitoring';
+import { createSteeleAgent } from './api/agent/majorSteele.js';
 
 import chatHandler from './api/gemini/chat.js';
 import healthHandler from './api/health.js';
@@ -22,6 +24,7 @@ const __dirname = path.dirname(__filename);
 
 const monitoringClient = new monitoring.MetricServiceClient();
 const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT || 'defuse-ai';
+const bigquery = new BigQuery({ projectId: PROJECT_ID });
 
 const app = express();
 
@@ -46,24 +49,42 @@ console.error = (...args) => {
 // ─── Cloud Secret Manager Logic ──────────────────────────────
 const secrets = new SecretManagerServiceClient();
 /**
- * Securely retrieves the Gemini API Key from environment or Google Secret Manager.
- * @returns {Promise<string|null>} The API key or null if retrieval fails.
+ * Load API keys from Secret Manager or Environment.
+ * Supports dual-key architecture: Tactical (Gemini) and Agentic (Vertex AI / ADK).
  */
-async function getGeminiKey() {
-  if (process.env.GEMINI_API_KEY) return process.env.GEMINI_API_KEY;
-  try {
-    // Attempt to load from Secret Manager if running in GCP environment
-    const [version] = await secrets.accessSecretVersion({
-      name: `projects/${process.env.GOOGLE_CLOUD_PROJECT || 'defuse-ai'}/secrets/GEMINI_API_KEY/versions/latest`,
-    });
-    const key = version.payload.data.toString();
-    console.log("[Secret Manager] Securely retrieved API Key.");
-    process.env.GEMINI_API_KEY = key;
-    return key;
-  } catch (err) {
-    console.warn("[Secret Manager] Fallback retrieval skipped (no GCP context or secret missing).");
-    return null;
+let cachedKeys = null;
+async function getApiKeys() {
+  if (cachedKeys) return cachedKeys;
+
+  // Defaults from environment
+  let geminiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+  let vertexKey = process.env.VERTEX_AI_API_KEY;
+
+  // Cloud Run / Secret Manager Fallback
+  if ((!geminiKey || !vertexKey) && process.env.K_SERVICE) {
+    try {
+      const client = new SecretManagerServiceClient();
+      
+      if (!geminiKey) {
+        const [version] = await client.accessSecretVersion({
+          name: `projects/${PROJECT_ID}/secrets/GEMINI_API_KEY/versions/latest`,
+        });
+        geminiKey = version.payload.data.toString();
+      }
+
+      if (!vertexKey) {
+        const [adkVersion] = await client.accessSecretVersion({
+          name: `projects/${PROJECT_ID}/secrets/VERTEX_AI_API_KEY/versions/latest`,
+        });
+        vertexKey = adkVersion.payload.data.toString();
+      }
+    } catch (err) {
+      console.warn("[SecretManager] Could not load all keys, falling back to env.", err.message);
+    }
   }
+
+  cachedKeys = { geminiKey, vertexKey };
+  return cachedKeys;
 }
 
 // ─── Security & Efficiency Middleware ────────────────────────
@@ -113,7 +134,8 @@ app.use('/api/', apiLimiter);
  */
 app.post('/api/gemini/chat', async (req, res, next) => {
   // Ensure key is loaded before handling request
-  await getGeminiKey();
+  const keys = await getApiKeys();
+  if (!keys.geminiKey) return res.status(500).json({ error: "Missing Gemini API Key." });
   recordMetric('gemini_api_requests', 1);
   chatHandler(req, res, next);
 });
@@ -146,8 +168,9 @@ async function recordMetric(name, value = 1) {
 
 // ─── API Routes ─────────────────────────────────────────────
 app.get('/api/health', async (req, res, next) => {
-  const hasKey = !!(await getGeminiKey());
-  req.hasKey = hasKey; // Pass to handler if needed or just use current handler
+  const keys = await getApiKeys();
+  req.hasKey = !!keys.geminiKey;
+  req.hasVertexKey = !!keys.vertexKey;
   healthHandler(req, res, next);
 });
 
@@ -165,8 +188,60 @@ app.get('/api/config', (req, res) => {
     messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || process.env.FIREBASE_MESSAGING_SENDER_ID,
     appId: process.env.VITE_FIREBASE_APP_ID || process.env.FIREBASE_APP_ID,
     recaptchaKey: process.env.VITE_RECAPTCHA_SITE_KEY || process.env.RECAPTCHA_SITE_KEY,
+    vertexEnabled: true, // Signal to frontend that Phase 7 is live
   });
 });
+
+/**
+ * BigQuery Archival Service.
+ * Ingests mission telemetry into the analytical data warehouse.
+ */
+async function recordToBigQuery(data) {
+  const datasetId = 'mission_archives';
+  const tableId = 'mission_history';
+  try {
+    const rows = [{
+      missionId: data.missionId || `M-${Date.now()}`,
+      timestamp: bigquery.timestamp(new Date()),
+      difficulty: data.difficulty,
+      result: data.result, // 'success' or 'fail'
+      timeSpent: parseInt(data.timeSpent),
+      tilesCleared: parseInt(data.tilesCleared),
+      aiAdviceCount: parseInt(data.aiAdviceCount) || 0
+    }];
+    await bigquery.dataset(datasetId).table(tableId).insert(rows);
+    console.log(`[BigQuery] Mission ${data.missionId} archived successfully.`);
+  } catch (err) {
+    console.error("[BigQuery] Archival failed.", err.message);
+  }
+}
+
+app.post('/api/archive', async (req, res) => {
+  // Ensure table exists (best effort for hackathon)
+  const { difficulty, result, timeSpent, tilesCleared, aiAdviceCount } = req.body;
+  await recordToBigQuery({ difficulty, result, timeSpent, tilesCleared, aiAdviceCount });
+  res.status(200).json({ status: "archived" });
+});
+
+/**
+ * Agentic Chat Endpoint.
+ * Faciliates conversation with Major Steele via the Google Cloud ADK.
+ */
+app.post('/api/agent/chat', async (req, res) => {
+  const { message } = req.body;
+  try {
+    const keys = await getApiKeys();
+    if (!keys.vertexKey) return res.status(500).json({ error: "Missing Vertex AI / ADK Key" });
+    
+    const agent = createSteeleAgent(PROJECT_ID, keys.vertexKey);
+    const response = await agent.chat(message);
+    res.status(200).json({ response });
+  } catch (err) {
+    console.error("[ADK Agent] Chat failed.", err.message);
+    res.status(500).json({ error: "Intelligence Office is currently offline." });
+  }
+});
+
 
 // Serve the statically compiled Vite frontend
 const distPath = path.join(__dirname, 'dist');
