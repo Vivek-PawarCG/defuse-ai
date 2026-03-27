@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 🛡️ Global Leaderboard Security Rules
+    match /leaderboard/{scoreId} {
+      
+      // Allow everyone to see the Hall of Fame
+      allow read: if true;
+
+      // Allow creating a new score if it meets tactical criteria
+      allow create: if request.resource.data.username is string 
+                    && request.resource.data.username.size() >= 3
+                    && request.resource.data.username.size() <= 15
+                    && request.resource.data.score is number
+                    && request.resource.data.time is number
+                    && request.resource.data.difficulty in ['rookie', 'cadet', 'specialist', 'veteran', 'legend']
+                    && request.resource.data.date == request.time;
+      
+      // Disallow updates/deletes to maintain record integrity
+      allow update, delete: if false;
+    }
+
+    // Default: Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
