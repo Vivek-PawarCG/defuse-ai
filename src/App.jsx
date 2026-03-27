@@ -7,6 +7,7 @@ import {
   findDeterministicMove, findRandomGuess, formatTime, labelToCoord,
 } from './utils/gameLogic.js';
 import { checkHealth } from './utils/api.js';
+import { trackEvent } from './utils/analytics.js';
 import { useTimer } from './hooks/useTimer.js';
 import { useAudio } from './hooks/useAudio.js';
 import { useRex } from './hooks/useRex.js';

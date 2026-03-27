@@ -93,7 +93,7 @@ export default function BriefingScreen({ onEnterField, onOpenCommandCenter, apiR
         <h1 className="title-defuse">DEFUSE</h1>
         <p className="subtitle">BOMB DISPOSAL TRAINING - FIELD EXERCISE</p>
         <div className="btn-group">
-          <button className="btn-military primary-btn pulse" onClick={onStartGame}>INITIALIZE DEPLOYMENT</button>
+          <button className="btn-military primary-btn pulse" onClick={onEnterField}>INITIALIZE DEPLOYMENT</button>
           <button className="btn-military secondary-btn" onClick={onOpenCommandCenter}>ENTER COMMAND CENTER</button>
           {/* Assuming setShowManual is defined elsewhere or passed as prop */}
           {/* <button className="btn-military secondary-btn" onClick={() => setShowManual(true)}>FIELD MANUAL</button> */}
