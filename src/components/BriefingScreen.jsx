@@ -61,7 +61,12 @@ export default function BriefingScreen({ onEnterField, apiReady, personality, sp
 
   // Set standard briefing
   useEffect(() => {
-    setBriefingText("Listen up, soldier. You're about to walk into a nine-by-nine grid of pure hell — every step could be your last. The mines are buried deep and they don't care about your rank or your prayers. Keep your wits sharp, your hands steady, and for God's sake, don't rush it.");
+    const briefings = [
+      "Stay sharp soldier.. this field punishes mistakes. Every move you make decides whether you walk out or not.",
+      "Steady now, soldier — this field tests nerves, not strength. One calm breath at a time, and you’ll make it through.",
+      "Attention, soldier. You’re entering a grid where precision isn’t optional — it’s survival. Maintain discipline and execute each move like your career depends on it."
+    ];
+    setBriefingText(briefings[Math.floor(Math.random() * briefings.length)]);
     setLoading(false);
   }, [personality]);
 
@@ -75,7 +80,7 @@ export default function BriefingScreen({ onEnterField, apiReady, personality, sp
   useEffect(() => {
     // If text finishes loading AFTER player accepts transmission
     if (transmissionAccepted && !loading && briefingText) {
-       speakRex(briefingText, personality, true);
+      speakRex(briefingText, personality, true);
     }
   }, [loading, briefingText, transmissionAccepted, personality, speakRex]);
 
@@ -91,11 +96,11 @@ export default function BriefingScreen({ onEnterField, apiReady, personality, sp
             <span className="blink-dot"></span>
             <span>INCOMING TRANSMISSION — COL. REX</span>
           </div>
-          
+
           {!transmissionAccepted ? (
             <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-              <button 
-                className="btn-military btn-gold" 
+              <button
+                className="btn-military btn-gold"
                 onClick={handleAcceptTransmission}
                 style={{ fontSize: '0.9rem', padding: '0.6rem 1.5rem', animation: 'blink 2s infinite' }}
               >

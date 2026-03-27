@@ -32,7 +32,7 @@ export default function RexPanel({ messages, loading, lifelineUsed, gameOver, on
         <span>COL. REX — RADIO COMMS</span>
       </div>
 
-      <div className="rex-messages">
+      <div className="rex-messages" aria-live="polite" aria-atomic="false">
         {messages.map((msg, i) => (
           <div
             key={msg.id}

@@ -57,7 +57,7 @@ export default function MinesweeperGrid({
   };
 
   return (
-    <div className="grid" style={gridStyle} onContextMenu={e => e.preventDefault()}>
+    <div className="grid" style={gridStyle} onContextMenu={e => e.preventDefault()} role="grid" aria-label="Minesweeper Board">
       {/* Corner */}
       <div className="grid-label grid-corner"></div>
 
@@ -75,9 +75,23 @@ export default function MinesweeperGrid({
             const heatVal = (!cell.revealed && !cell.flagged && heatmapEnabled && heatmapData)
               ? heatmapData[r]?.[c] : null;
 
+            const tLabel = tileCoordToLabel(r, c);
+            let ariaLabel = `Tile ${tLabel}. `;
+            if (cell.revealed) {
+              if (cell.mine) ariaLabel += 'Detonated mine.';
+              else ariaLabel += `${cell.adjacentMines} adjacent mines.`;
+            } else if (cell.flagged) {
+              ariaLabel += 'Flagged.';
+            } else {
+              ariaLabel += 'Unrevealed.';
+            }
+
             return (
               <div
                 key={`tile-${r}-${c}`}
+                role="button"
+                tabIndex={0}
+                aria-label={ariaLabel}
                 className={getTileClass(cell, r, c)}
                 style={{
                   width: tileSize + 'px',
@@ -86,9 +100,16 @@ export default function MinesweeperGrid({
                     ? { '--heat': heatVal.toFixed(3) }
                     : {}),
                 }}
-                title={tileCoordToLabel(r, c)}
+                title={tLabel}
                 onClick={(e) => { e.preventDefault(); onRevealTile(r, c); }}
                 onContextMenu={(e) => { e.preventDefault(); onFlagTile(r, c); }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') onRevealTile(r, c);
+                  if (e.key === ' ' || e.key.toLowerCase() === 'f') {
+                    e.preventDefault();
+                    onFlagTile(r, c);
+                  }
+                }}
                 onTouchStart={(e) => handleTouchStart(r, c, e)}
                 onTouchEnd={handleTouchEnd}
                 onTouchMove={handleTouchEnd}
