@@ -9,7 +9,7 @@ import rateLimit from 'express-rate-limit';
 import { Logging } from '@google-cloud/logging';
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 import { BigQuery } from '@google-cloud/bigquery';
-import monitoring from '@google-cloud/monitoring';
+import { MetricServiceClient } from '@google-cloud/monitoring';
 import { createSteeleAgent } from './api/agent/majorSteele.js';
 
 import chatHandler from './api/gemini/chat.js';
@@ -22,15 +22,22 @@ import healthHandler from './api/health.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const monitoringClient = new monitoring.MetricServiceClient();
 const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT || 'defuse-ai';
-const bigquery = new BigQuery({ projectId: PROJECT_ID });
+
+// Initialize Cloud Services with fail-safes
+let monitoringClient, bigquery, loggingClient;
+try {
+  monitoringClient = new MetricServiceClient();
+  bigquery = new BigQuery({ projectId: PROJECT_ID });
+  loggingClient = new Logging({ projectId: PROJECT_ID });
+} catch (err) {
+  console.warn("Service initialization failed, falling back to basic mode.", err.message);
+}
 
 const app = express();
 
 // ─── Cloud Logging Integration ──────────────────────────────
-const logging = new Logging();
-const log = logging.log('defuse-ai-server-log');
+const log = (loggingClient || new Logging({ projectId: PROJECT_ID })).log('defuse-ai-server-log');
 const originalConsoleLog = console.log;
 const originalConsoleError = console.error;
 
@@ -84,6 +91,10 @@ async function getApiKeys() {
   }
 
   cachedKeys = { geminiKey, vertexKey };
+  // Propagate to environment for sub-modules
+  if (geminiKey) process.env.GEMINI_API_KEY = geminiKey;
+  if (vertexKey) process.env.VERTEX_AI_API_KEY = vertexKey;
+  
   return cachedKeys;
 }
 
@@ -146,9 +157,10 @@ app.post('/api/gemini/chat', async (req, res, next) => {
  * @param {number} value - Value to record
  */
 async function recordMetric(name, value = 1) {
+  if (!monitoringClient) return;
   try {
     const dataPoint = {
-      interval: { endTime: { seconds: Date.now() / 1000 } },
+      interval: { endTime: { seconds: Math.floor(Date.now() / 1000) } },
       value: { doubleValue: value },
     };
     const timeSeriesData = {
@@ -157,7 +169,7 @@ async function recordMetric(name, value = 1) {
       points: [dataPoint],
     };
     await monitoringClient.createTimeSeries({
-      name: monitoringClient.projectPath(PROJECT_ID),
+      name: `projects/${PROJECT_ID}`,
       timeSeries: [timeSeriesData],
     });
   } catch (err) {
@@ -197,6 +209,7 @@ app.get('/api/config', (req, res) => {
  * Ingests mission telemetry into the analytical data warehouse.
  */
 async function recordToBigQuery(data) {
+  if (!bigquery) return;
   const datasetId = 'mission_archives';
   const tableId = 'mission_history';
   try {
