@@ -109,8 +109,8 @@ body,
 #briefing-screen {
     background: var(--bg);
     position: relative;
-    overflow-y: auto;
-    justify-content: safe center;
+    overflow: hidden;
+    justify-content: center;
 }
 
 .static-canvas {
@@ -129,7 +129,7 @@ body,
 .briefing-content {
     z-index: 10;
     text-align: center;
-    padding: 2rem;
+    padding: 1rem 2rem;
     max-width: 700px;
     width: 100%;
     flex-shrink: 0;
@@ -137,7 +137,7 @@ body,
 
 .title-defuse {
     font-family: var(--font-heading);
-    font-size: clamp(4rem, 12vw, 8rem);
+    font-size: clamp(3rem, 10vw, 6rem);
     font-weight: 700;
     color: var(--green);
     text-transform: uppercase;
@@ -173,27 +173,27 @@ body,
 
 .subtitle {
     font-family: var(--font-heading);
-    font-size: clamp(0.75rem, 2vw, 1rem);
+    font-size: clamp(0.7rem, 1.5vw, 0.9rem);
     color: var(--text-dim);
     letter-spacing: 0.4em;
     text-transform: uppercase;
-    margin-top: 0.5rem;
-    margin-bottom: 2.5rem;
+    margin-top: 0.2rem;
+    margin-bottom: 1.5rem;
 }
 
 .briefing-box {
     background: rgba(0, 255, 65, 0.03);
     border: 1px solid rgba(0, 255, 65, 0.15);
     border-radius: 4px;
-    padding: 1.5rem;
+    padding: 1rem;
     text-align: left;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
 }
 
 .briefing-header {
     display: flex;
     align-items: center;
-    font-size: 0.65rem;
+    font-size: 0.75rem;
     color: var(--green-dim);
     letter-spacing: 0.15em;
     text-transform: uppercase;
@@ -204,7 +204,7 @@ body,
 
 .typewriter-text {
     font-family: var(--font-mono);
-    font-size: 0.60rem;
+    font-size: 0.65rem;
     line-height: 1.7;
     color: var(--green);
     min-height: 4em;
@@ -394,7 +394,8 @@ body,
     flex-shrink: 0;
     max-width: 100%;
     overflow-x: auto;
-    padding-bottom: 10px; /* Space for scrollbar */
+    padding-bottom: 10px;
+    /* Space for scrollbar */
     scrollbar-width: thin;
     scrollbar-color: var(--green-dim) transparent;
 }
@@ -431,7 +432,8 @@ body,
     border: 1px solid rgba(85, 85, 85, 0.4);
     transition: all 0.15s;
     position: relative;
-    flex-shrink: 0; /* Prevent tile from shrinking */
+    flex-shrink: 0;
+    /* Prevent tile from shrinking */
 }
 
 .tile-hidden {
@@ -1692,8 +1694,15 @@ body,
 }
 
 @keyframes scale-in {
-    from { transform: scale(0.85); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
+    from {
+        transform: scale(0.85);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 /* ─── LEADERBOARD STYLING ───────────────────────── */
@@ -1707,7 +1716,8 @@ body,
 .leaderboard-table {
     display: flex;
     flex-direction: column;
-    gap: 0px; /* Tighter rows */
+    gap: 0px;
+    /* Tighter rows */
     margin-top: 1rem;
     font-family: var(--font-mono);
     border: 1px solid rgba(0, 255, 65, 0.15);
@@ -1773,14 +1783,24 @@ body,
     font-size: 0.75rem;
 }
 
-.lb-row:nth-child(1) .lb-rank { color: #ffd700; text-shadow: 0 0 5px rgba(255, 215, 0, 0.4); }
-.lb-row:nth-child(2) .lb-rank { color: #c0c0c0; }
-.lb-row:nth-child(3) .lb-rank { color: #cd7f32; }
+.lb-row:nth-child(1) .lb-rank {
+    color: #ffd700;
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.4);
+}
+
+.lb-row:nth-child(2) .lb-rank {
+    color: #c0c0c0;
+}
+
+.lb-row:nth-child(3) .lb-rank {
+    color: #cd7f32;
+}
 
 /* Custom scrollbar for leaderboard */
 .lb-body::-webkit-scrollbar {
     width: 4px;
 }
+
 .lb-body::-webkit-scrollbar-thumb {
     background: var(--green-dim);
 }
@@ -1827,5 +1847,10 @@ body,
     min-height: 1em;
 }
 
-.lb-status-success { color: var(--green); }
-.lb-status-error { color: var(--red); }
+.lb-status-success {
+    color: var(--green);
+}
+
+.lb-status-error {
+    color: var(--red);
+}

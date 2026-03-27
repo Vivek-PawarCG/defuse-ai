@@ -17,7 +17,7 @@ export default function GameScreen({
   onRevealTile, onFlagTile, onSwitchDifficulty, onSwitchPersonality,
   onToggleVoice, onToggleHeatmap, onAutoSolve, onSurrender,
   onSendLifeline, onRetry, onReviewBoard, onReturnToBase,
-  onNextMission, onDismissVictory,
+  onNextMission, onDismissVictory, onOpenCommandCenter
 }) {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   return (
@@ -63,6 +63,7 @@ export default function GameScreen({
           lifelineUsed={lifelineUsed}
           gameOver={gameOver}
           onSendLifeline={onSendLifeline}
+          onOpenCommandCenter={onOpenCommandCenter}
         />
 
         {showGameOver && (

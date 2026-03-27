@@ -1,0 +1,28 @@
+# Architectural Discussion: Vertex AI SDK Migration
+Date: 2026-03-28
+
+## Overview
+The current implementation of Major Steele uses a custom 'Agency.js' wrapper. While functional, it does not leverage the native 'Function Calling' and 'System Instruction' features of the official @google-cloud/vertexai SDK.
+
+## Key Outcomes
+
+### 1. Model Selection
+- gemini-1.5-flash: To be considered legacy.
+- gemini-2.5-flash-lite / gemini-3.1: Recommended for production-grade performance and cost-efficiency in 2026.
+
+### 2. Tool-Calling Strategy
+- Current: Manual prompt-injection of tool descriptions.
+- Proposed: Native `functionDeclarations`. 
+- Logic: The server will listen for `functionCall` responses, execute the BigQuery query, and send the `functionResponse` back to the model for final synthesis.
+
+### 3. Structural Refactoring
+- Deprecate: Agency.js (Custom Agent/Tool classes).
+- Adopt: Direct `vertex_ai.getGenerativeModel()` with `tools` and `systemInstruction` configuration.
+- SDK: Evaluate migration to `@google/genai` (Unified SDK) for simpler cross-provider support.
+
+### 4. Code Impact (Future)
+- `api/agent/majorSteele.js` will be updated to export a `GenerativeModel` instance or a wrapper that handles the native tool-calling loop.
+- `server.js` chat route will handle the multi-turn conversation required for function calling.
+
+## Conclusion
+Transitioning to the native SDK pattern will improve model reliability, reduce prompt token overhead (by moving instructions to the system level), and ensure 100% compliance with official Google Cloud development standards.

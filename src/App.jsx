@@ -564,7 +564,6 @@ export default function App() {
             apiReady={apiReady}
             personality={personality}
             speakRex={audio.speakRex}
-            onOpenCommandCenter={() => setScreen(SCREENS.COMMAND_CENTER)}
           />
         );
       case SCREENS.GAME:
@@ -616,6 +615,7 @@ export default function App() {
             onReturnToBase={returnToBase}
             onNextMission={nextMission}
             onDismissVictory={dismissVictory}
+            onOpenCommandCenter={() => setScreen(SCREENS.COMMAND_CENTER)}
           />
         );
       case SCREENS.COMMAND_CENTER:

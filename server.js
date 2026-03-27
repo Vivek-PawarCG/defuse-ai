@@ -10,7 +10,7 @@ import { Logging } from '@google-cloud/logging';
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 import { BigQuery } from '@google-cloud/bigquery';
 import { MetricServiceClient } from '@google-cloud/monitoring';
-import { createSteeleAgent } from './api/agent/majorSteele.js';
+import { getSteeleModel, runSteeleTool } from './api/agent/majorSteele.js';
 
 import chatHandler from './api/gemini/chat.js';
 import healthHandler from './api/health.js';
@@ -244,14 +244,40 @@ app.post('/api/agent/chat', async (req, res) => {
   const { message } = req.body;
   try {
     const keys = await getApiKeys();
-    if (!keys.vertexKey) return res.status(500).json({ error: "Missing Vertex AI / ADK Key" });
-    
-    const agent = createSteeleAgent(PROJECT_ID, keys.vertexKey);
-    const response = await agent.chat(message);
-    res.status(200).json({ response });
+    // Vertex AI supports ADC natively, but we ensure configuration is present
+    if (!PROJECT_ID) return res.status(500).json({ error: "Missing Google Cloud Project ID" });
+
+    const model = getSteeleModel();
+    let result = await model.generateContent(message);
+    let response = await result.response;
+    let parts = response.candidates[0].content.parts;
+
+    // Handle single-turn function calling
+    const functionCallPart = parts.find(p => p.functionCall);
+    if (functionCallPart) {
+      const { name, args } = functionCallPart.functionCall;
+      const toolResult = await runSteeleTool(name, args);
+      
+      const secondaryResult = await model.generateContent({
+        contents: [
+          { role: 'user', parts: [{ text: message }] },
+          { role: 'model', parts: [functionCallPart] },
+          { 
+            role: 'user', 
+            parts: [{ 
+              functionResponse: { name, response: { content: toolResult } } 
+            }] 
+          }
+        ]
+      });
+      response = await secondaryResult.response;
+    }
+
+    const finalResponse = response.candidates[0].content.parts[0].text;
+    res.status(200).json({ response: finalResponse });
   } catch (err) {
-    console.error("[ADK Agent] Chat failed.", err.message);
-    res.status(500).json({ error: "Intelligence Office is currently offline." });
+    console.error("[Intelligence Office] Analysis failed.", err.message);
+    res.status(500).json({ error: "Major Steele is currently dealing with high-priority intel. Try again shortly." });
   }
 });
 

@@ -1,27 +1,59 @@
-import { Agent, Tool } from './Agency.js';
 import { BigQuery } from '@google-cloud/bigquery';
 import { VertexAI } from '@google-cloud/vertexai';
 
+const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT || 'defuse-ai';
+const bigquery = new BigQuery({ projectId: PROJECT_ID });
+
 /**
- * Tactical Intel Tool.
- * Allows Major Steele to query the BigQuery mission archives.
+ * Native Tool Definitions for Vertex AI.
+ * Major Steele can use these to query mission telemetry.
  */
-class BigQueryTool extends Tool {
-  constructor(projectId) {
-    super({
-      name: 'query_mission_archives',
-      description: 'Queries the historical mission archives to analyze player performance trends, win/loss ratios, and difficulty stats.',
-      parameters: {
-        type: 'object',
-        properties: {
-          limit: { type: 'number', description: 'Number of recent missions to analyze' }
+const tools = [
+  {
+    functionDeclarations: [
+      {
+        name: 'query_mission_history',
+        description: 'Queries the historical mission archives to analyze player performance trends, win/loss ratios, and difficulty stats.',
+        parameters: {
+          type: 'OBJECT',
+          properties: {
+            limit: { type: 'NUMBER', description: 'Number of recent missions to analyze (default 5)' }
+          }
         }
       }
-    });
-    this.bigquery = new BigQuery({ projectId });
+    ]
   }
+];
 
-  async run({ limit = 5 }) {
+/**
+ * Major Steele Agent - Native Implementation.
+ * Optimized for the 2026 Hackathon using official Vertex AI function calling.
+ */
+export function getSteeleModel() {
+  const vertex_ai = new VertexAI({ project: PROJECT_ID, location: 'us-central1' });
+  
+  return vertex_ai.getGenerativeModel({
+    model: 'gemini-1.5-flash', // Keeping 1.5-flash for stability; upgrade to 2.5/3.1 once ID is confirmed in environment
+    systemInstruction: {
+      role: 'system',
+      parts: [{
+        text: `You are Major Steele, the Strategic Intelligence Officer for the Defuse AI project.
+        Your tone is professional, authoritative, and data-focused.
+        You analyze mission history to provide strategic advice. Mention specific trends if you see them.
+        If you need mission data, use the query_mission_history tool.`
+      }]
+    },
+    tools: tools
+  });
+}
+
+/**
+ * Tool Execution Handler.
+ * Bridges the LLM function calls with actual Google Cloud services.
+ */
+export async function runSteeleTool(name, args) {
+  if (name === 'query_mission_history') {
+    const limit = args.limit || 5;
     const query = `
       SELECT difficulty, result, timeSpent, timestamp 
       FROM \`mission_archives.mission_history\` 
@@ -29,37 +61,15 @@ class BigQueryTool extends Tool {
       LIMIT @limit
     `;
     try {
-      const [rows] = await this.bigquery.query({
+      const [rows] = await bigquery.query({
         query,
         params: { limit: parseInt(limit) }
       });
-      return JSON.stringify(rows);
+      return rows;
     } catch (err) {
-      return `Error querying archives: ${err.message}`;
+      console.error("[BigQuery Tool] Failed to query archives:", err.message);
+      return { error: err.message };
     }
   }
-}
-
-/**
- * Major Steele Agent.
- * An Agentic Intelligence Officer built with a custom lightweight framework
- * powered by the Official Google Cloud Vertex AI SDK.
- */
-export function createSteeleAgent(projectId) {
-  // Initialize Vertex AI
-  // This natively supports Service Accounts/ADC if apiKey is null!
-  const vertex_ai = new VertexAI({ project: projectId, location: 'us-central1' });
-
-  const agent = new Agent({
-    name: 'Major Steele',
-    description: 'A strategic intelligence officer specializing in data-driven bomb disposal analysis.',
-    instruction: `You are Major Steele, the Strategic Intelligence Officer for the Defuse AI project.
-    Your tone is professional, authoritative, and data-focused.
-    You analyze mission history to provide strategic advice. Mention specific trends if you see them.`,
-    model: 'gemini-2.5-flash-lite',
-    client: vertex_ai
-  });
-
-  agent.addTool(new BigQueryTool(projectId));
-  return agent;
+  return null;
 }
