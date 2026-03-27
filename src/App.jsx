@@ -10,6 +10,7 @@ import { checkHealth } from './utils/api.js';
 import { useTimer } from './hooks/useTimer.js';
 import { useAudio } from './hooks/useAudio.js';
 import { useRex } from './hooks/useRex.js';
+import { trackEvent } from './utils/analytics.js';
 import BriefingScreen from './components/BriefingScreen.jsx';
 import GameScreen from './components/GameScreen.jsx';
 

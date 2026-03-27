@@ -11,6 +11,7 @@ const firebaseConfig = {
 };
 
 let db = null;
+let appInstance = null;
 
 export const initFirestore = async () => {
   if (db) return db;
