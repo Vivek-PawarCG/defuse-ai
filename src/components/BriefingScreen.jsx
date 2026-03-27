@@ -59,26 +59,11 @@ export default function BriefingScreen({ onEnterField, apiReady, personality, sp
     };
   }, []);
 
-  // Fetch briefing from API
+  // Set standard briefing
   useEffect(() => {
-    const fetchBriefing = async () => {
-      if (apiReady) {
-        const prompt = `You are Colonel Rex, a grizzled bomb disposal instructor. Give a 3 sentence dramatic mission briefing to your rookie soldier. Mention the minefield, the stakes, and end with a warning. Military tone. No bullet points.`;
-        const result = await callGeminiAPI(
-          PERSONALITIES[personality] || PERSONALITIES['drill-sergeant'],
-          [{ role: 'user', parts: [{ text: prompt }] }],
-        );
-        if (result) {
-          setBriefingText(result);
-          setLoading(false);
-          return;
-        }
-      }
-      setBriefingText("Listen up, soldier. You're about to walk into a nine-by-nine grid of pure hell — every step could be your last. The mines are buried deep and they don't care about your rank or your prayers. Keep your wits sharp, your hands steady, and for God's sake, don't rush it.");
-      setLoading(false);
-    };
-    fetchBriefing();
-  }, [apiReady, personality]);
+    setBriefingText("Listen up, soldier. You're about to walk into a nine-by-nine grid of pure hell — every step could be your last. The mines are buried deep and they don't care about your rank or your prayers. Keep your wits sharp, your hands steady, and for God's sake, don't rush it.");
+    setLoading(false);
+  }, [personality]);
 
   const handleAcceptTransmission = () => {
     setTransmissionAccepted(true);
