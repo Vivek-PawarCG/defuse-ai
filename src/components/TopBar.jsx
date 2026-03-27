@@ -6,6 +6,7 @@ const DIFF_KEYS = ['rookie', 'cadet', 'specialist', 'veteran', 'legend'];
 export default function TopBar({
   minesRemaining, time, difficulty, personality, voiceEnabled, heatmapEnabled, gameOver,
   onSwitchDifficulty, onSwitchPersonality, onToggleVoice, onToggleHeatmap, onAutoSolve, onSurrender,
+  onShowLeaderboard,
 }) {
   const [showManual, setShowManual] = useState(false);
 
@@ -76,6 +77,10 @@ export default function TopBar({
               {gameOver ? '↻ NEW GAME' : '☠ SURRENDER'}
             </button>
           </div>
+          
+          <button className="btn-settings" onClick={onShowLeaderboard} title="View Global Hall of Fame">
+            🏆
+          </button>
 
           <button className="btn-settings" onClick={() => setShowManual(true)} title="Field Manual / How to Play">
             ?

@@ -1667,3 +1667,137 @@ body,
         font-size: 1rem;
     }
 }
+
+/* ─── LEADERBOARD STYLING ───────────────────────── */
+.leaderboard-panel {
+    max-width: 500px !important;
+    width: 90vw !important;
+    position: relative;
+    z-index: 1000;
+}
+
+.leaderboard-table {
+    display: flex;
+    flex-direction: column;
+    gap: 0px; /* Tighter rows */
+    margin-top: 1rem;
+    font-family: var(--font-mono);
+    border: 1px solid rgba(0, 255, 65, 0.15);
+}
+
+.lb-header {
+    display: grid;
+    grid-template-columns: 50px 1fr 60px 80px;
+    padding: 0.5rem;
+    background: rgba(0, 255, 65, 0.1);
+    color: var(--green);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    font-weight: bold;
+    border-bottom: 2px solid var(--green);
+}
+
+.lb-body {
+    display: flex;
+    flex-direction: column;
+    max-height: 280px;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.lb-row {
+    display: grid;
+    grid-template-columns: 50px 1fr 60px 80px;
+    padding: 0.6rem 0.5rem;
+    border-bottom: 1px solid rgba(0, 255, 65, 0.05);
+    font-size: 0.8rem;
+    transition: background 0.2s;
+    align-items: center;
+}
+
+.lb-row:hover {
+    background: rgba(0, 255, 65, 0.08);
+}
+
+.lb-rank {
+    color: var(--green-dim);
+    font-weight: bold;
+    font-size: 0.75rem;
+}
+
+.lb-name {
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-transform: uppercase;
+}
+
+.lb-score {
+    color: var(--yellow);
+    text-align: right;
+    font-weight: bold;
+}
+
+.lb-time {
+    color: var(--text-dim);
+    text-align: right;
+    font-size: 0.75rem;
+}
+
+.lb-row:nth-child(1) .lb-rank { color: #ffd700; text-shadow: 0 0 5px rgba(255, 215, 0, 0.4); }
+.lb-row:nth-child(2) .lb-rank { color: #c0c0c0; }
+.lb-row:nth-child(3) .lb-rank { color: #cd7f32; }
+
+/* Custom scrollbar for leaderboard */
+.lb-body::-webkit-scrollbar {
+    width: 4px;
+}
+.lb-body::-webkit-scrollbar-thumb {
+    background: var(--green-dim);
+}
+
+/* Victory Overlay - Score Submission */
+.lb-submit-box {
+    margin: 1.2rem 0;
+    padding: 1rem;
+    background: rgba(0, 255, 65, 0.03);
+    border: 1px dashed rgba(0, 255, 65, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    border-radius: 4px;
+}
+
+.lb-input {
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid var(--green-dim);
+    color: var(--green);
+    font-family: var(--font-mono);
+    padding: 0.6rem;
+    text-transform: uppercase;
+    text-align: center;
+    font-size: 1.1rem;
+    letter-spacing: 0.1em;
+    border-radius: 2px;
+}
+
+.lb-input:focus {
+    outline: none;
+    border-color: var(--green);
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
+}
+
+.lb-input::placeholder {
+    color: rgba(0, 255, 65, 0.2);
+    font-size: 0.8rem;
+}
+
+.lb-status-msg {
+    font-size: 0.65rem;
+    text-align: center;
+    min-height: 1em;
+}
+
+.lb-status-success { color: var(--green); }
+.lb-status-error { color: var(--red); }

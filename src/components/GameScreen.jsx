@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { TILE_SIZE_MAP } from '../utils/constants.js';
 import TopBar from './TopBar.jsx';
 import MinesweeperGrid from './MinesweeperGrid.jsx';
 import RexPanel from './RexPanel.jsx';
 import GameOverOverlay from './GameOverOverlay.jsx';
 import VictoryOverlay from './VictoryOverlay.jsx';
+import LeaderboardOverlay from './LeaderboardOverlay.jsx';
 
 export default function GameScreen({
   board, rows, cols, difficulty, minesRemaining, tilesRevealed, totalSafeTiles,
@@ -18,6 +19,7 @@ export default function GameScreen({
   onSendLifeline, onRetry, onReviewBoard, onReturnToBase,
   onNextMission, onDismissVictory,
 }) {
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
   return (
     <div id="game-screen" className={`screen active ${shakeClass}`}>
       <div className="scanline-overlay"></div>
@@ -36,6 +38,7 @@ export default function GameScreen({
         onToggleHeatmap={onToggleHeatmap}
         onAutoSolve={onAutoSolve}
         onSurrender={onSurrender}
+        onShowLeaderboard={() => setShowLeaderboard(true)}
       />
 
       <main id="game-main">
@@ -78,8 +81,18 @@ export default function GameScreen({
             speech={victorySpeech}
             title={victoryTitle}
             stats={victoryStats}
+            score={tilesRevealed}
+            time={time}
+            difficulty={difficulty}
             onNextMission={onNextMission}
             onReviewBoard={onDismissVictory}
+          />
+        )}
+
+        {showLeaderboard && (
+          <LeaderboardOverlay
+            difficulty={difficulty}
+            onClose={() => setShowLeaderboard(false)}
           />
         )}
       </main>

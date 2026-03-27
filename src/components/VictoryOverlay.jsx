@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { saveHighscore } from '../utils/firebase.js';
 
-export default function VictoryOverlay({ speech, title, stats, onNextMission, onReviewBoard }) {
+export default function VictoryOverlay({ speech, title, stats, score, time, difficulty, onNextMission, onReviewBoard }) {
   const canvasRef = useRef(null);
   const [showTitle, setShowTitle] = useState(false);
 
@@ -64,6 +65,29 @@ export default function VictoryOverlay({ speech, title, stats, onNextMission, on
     }
   }, [title]);
 
+  const [username, setUsername] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [statusMsg, setStatusMsg] = useState('');
+
+  const handleScoreSubmit = async (e) => {
+    e.preventDefault();
+    if (!username || username.length < 3) {
+      setStatusMsg('ID TOO SHORT. MIN 3 CHARS.');
+      return;
+    }
+    setIsSubmitting(true);
+    setStatusMsg('ESTABLISHING SECURE UPLINK...');
+    const success = await saveHighscore(username, score, time, difficulty);
+    setIsSubmitting(false);
+    if (success) {
+      setSubmitted(true);
+      setStatusMsg('RECORD SECURED IN HALL OF FAME.');
+    } else {
+      setStatusMsg('UPLINK FAILED. RETRY LATER.');
+    }
+  };
+
   return (
     <div className="victory-overlay" style={{ display: 'flex' }}>
       <div className="victory-pulse"></div>
@@ -77,6 +101,36 @@ export default function VictoryOverlay({ speech, title, stats, onNextMission, on
           </div>
         )}
         <div className="victory-stats">{stats}</div>
+
+        {!submitted ? (
+          <form className="lb-submit-box" onSubmit={handleScoreSubmit}>
+            <input
+              type="text"
+              className="lb-input"
+              placeholder="ENTER CODENAME"
+              value={username}
+              onChange={(e) => setUsername(e.target.value.toUpperCase().substring(0, 15))}
+              disabled={isSubmitting}
+            />
+            <button 
+              type="submit" 
+              className="btn-military btn-gold btn-lb" 
+              disabled={isSubmitting || !username}
+            >
+              {isSubmitting ? 'TRANSMITTING...' : 'RECORD TO HALL OF FAME'}
+            </button>
+            <div className={`lb-status-msg ${statusMsg.includes('FAILED') ? 'lb-status-error' : 'lb-status-success'}`}>
+              {statusMsg}
+            </div>
+          </form>
+        ) : (
+          <div className="lb-submit-box" style={{ borderColor: 'var(--green)', background: 'rgba(0, 255, 65, 0.1)' }}>
+            <div className="lb-status-msg lb-status-success" style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>
+              ✓ MISSION LOGGED: {username}
+            </div>
+          </div>
+        )}
+
         <div className="gameover-buttons">
           <button className="btn-military btn-gold" onClick={onNextMission}>▶ NEXT MISSION</button>
           <button className="btn-military btn-secondary" onClick={onReviewBoard}>👁 REVIEW BOARD</button>

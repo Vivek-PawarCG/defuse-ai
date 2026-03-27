@@ -1,4 +1,17 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { z } from "zod";
+import { getCachedResponse, setCachedResponse } from "../utils/cache.js";
+
+const ChatSchema = z.object({
+  system_instruction: z.any().optional(),
+  contents: z.array(
+    z.object({
+      role: z.enum(['user', 'model']),
+      parts: z.array(z.object({ text: z.string() }))
+    })
+  ),
+  generationConfig: z.any().optional()
+});
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
@@ -10,10 +23,23 @@ export default async function handler(req, res) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const { system_instruction, contents, generationConfig } = req.body;
+    const parseResult = ChatSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      console.warn("Invalid Payload Detected:", parseResult.error);
+      return res.status(400).json({ error: "Invalid request payload format." });
+    }
+
+    const { system_instruction, contents, generationConfig } = parseResult.data;
+
+    // ─── Cache Layer ───────────────────────────────────────
+    const cacheKey = JSON.stringify(contents.slice(-1));
+    const cached = getCachedResponse(cacheKey);
+    if (cached) {
+      return res.status(200).json({ responseText: cached, cached: true });
+    }
 
     // Use default if not explicitly defined
-    const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
+    const modelName = process.env.GEMINI_MODEL || "gemini-1.5-flash";
 
     // Extract the raw text from the REST-style system_instruction structure that the frontend sends
     const sysPromptText = system_instruction?.parts?.[0]?.text || system_instruction || "";
@@ -28,7 +54,10 @@ export default async function handler(req, res) {
       generationConfig: generationConfig
     });
 
-    res.status(200).json({ responseText: result.response.text() });
+    const responseText = result.response.text();
+    setCachedResponse(cacheKey, responseText);
+
+    res.status(200).json({ responseText });
   } catch (error) {
     console.error("Gemini Error:", error);
 
