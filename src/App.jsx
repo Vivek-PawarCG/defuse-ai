@@ -115,6 +115,8 @@ export default function App() {
     firstClickRef.current = true;
     tilesRevealedRef.current = 0;
     minesRemainingRef.current = cfg.mines;
+
+    trackEvent('mission_start', { difficulty });
   }, [difficulty, timer]);
 
   // ─── Handle Victory ─────────────────────────────────────
@@ -151,6 +153,8 @@ export default function App() {
     setVictorySpeech(mainSpeech);
     setVictoryTitle(`★ ${title} ★`);
     audio.speakRex(mainSpeech, personality, true);
+
+    trackEvent('mission_success', { difficulty, time: timeVal, score: totalSafeTiles });
   }, [timer, audio, rex, personality, totalSafeTiles, flagsUsed]);
 
   // ─── Handle Explosion ───────────────────────────────────
@@ -203,6 +207,8 @@ export default function App() {
 
     setGameOverEulogy(eulogyText);
     audio.speakRex(eulogyText, personality, true);
+
+    trackEvent('mission_failed', { difficulty, time: timeVal, tilesCleared: tilesRevealedRef.current, surrendered: isSurrender });
   }, [timer, audio, rex, personality, config]);
 
   // ─── Reveal Tile ─────────────────────────────────────────

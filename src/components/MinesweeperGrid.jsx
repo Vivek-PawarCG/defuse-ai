@@ -1,4 +1,5 @@
 import React, { useRef, useCallback } from 'react';
+import PropTypes from 'prop-types';
 import { TILE_SIZE_MAP } from '../utils/constants.js';
 import { colToLetter, tileCoordToLabel } from '../utils/gameLogic.js';
 
@@ -123,3 +124,16 @@ export default function MinesweeperGrid({
     </div>
   );
 }
+
+MinesweeperGrid.propTypes = {
+  board: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.object)).isRequired,
+  rows: PropTypes.number.isRequired,
+  cols: PropTypes.number.isRequired,
+  difficulty: PropTypes.string.isRequired,
+  heatmapEnabled: PropTypes.bool.isRequired,
+  heatmapData: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.number)),
+  gameOver: PropTypes.bool.isRequired,
+  missedFlags: PropTypes.instanceOf(Set),
+  onRevealTile: PropTypes.func.isRequired,
+  onFlagTile: PropTypes.func.isRequired,
+};

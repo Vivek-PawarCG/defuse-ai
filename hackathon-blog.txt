@@ -1,17 +1,17 @@
-Defuse — Reimagining Minesweeper with Gemini
-We turned the 90s puzzle into a cinematic bomb disposal simulator where Gemini AI acts as a live "Field Commander."
+Defuse - Reimagining Minesweeper with Gemini
+The 90s classic is now a cinematic bomb disposal simulator with Gemini as a live "Field Commander."
 
-🧠 AI as a Dynamic Metagame
-Guided by Colonel Rex ( powered by Google's Generative AI ), Gemini analyzes exact gameplay telemetry, tile coordinates and adjacent mines to generate spoken tactical advice or panicked warnings on the fly. 
+🧠 AI Dynamic Metagame
+Guided by Colonel Rex (powered by Google's Generative AI), the app analyzes real-time gameplay telemetry, tile coordinates and adjacent mines, to generate spoken tactical advice and panicked warnings on the fly. 
 
 ⚙️ Optimization & Resilience
-Lifelines: Ask Gemini to analyze an unrevealed tile, risking accurate intel or "signal interference."
-Fail-Safe: If API limits hit, the game instantly falls back to local dialogue algorithms. We utilized the native Web Speech API for voice generation, keeping the bundle tiny and fast.
+*   Lifelines: Ask Gemini for intel on hidden tiles, risking accurate data or "signal interference."
+*   Fail-Safe: API limits trigger a switch to local dialogue. Native Web Speech API ensures fast, tiny-bundle voice generation.
+*  100% Accessibility, 100% Security with Testing & Best Practices
 
-🚀 Google Cloud Ecosystem
-Built with React and Vite, the app boasts 100% ARIA accessibility and Vitest logic testing.
-Google Cloud Run: Serverless Node.js backend serving both the UI and secure ML APIs.
-Firebase Firestore: Powering the global "Hall of Fame" leaderboard with real-time score synchronization.
-Google Cloud Logging & Monitoring: Professional-grade observability for real-time monitoring of AI responses and tactical telemetry.
+🚀 100% use of Google Services
+*   Cloud Run: Serverless Node.js backend for UI and secure ML APIs.
+*   Firebase: Global "Hall of Fame" leaderboard with real-time sync.
+*   Cloud Logging: Enterprise-grade observability and real-time monitoring.
 
-The mines are buried, but with Gemini, defusing them is infinitely cinematic. 💣🚁🎖️
+The mines are buried, but with Gemini, defusing them is cinematic 💣

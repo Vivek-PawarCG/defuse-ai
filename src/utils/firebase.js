@@ -44,6 +44,7 @@ export const initFirestore = async () => {
 
   try {
     const app = initializeApp(config);
+    appInstance = app;
     db = getFirestore(app);
     return db;
   } catch (e) {
@@ -51,6 +52,8 @@ export const initFirestore = async () => {
     return null;
   }
 };
+
+export const getFirebaseApp = () => appInstance;
 
 export const saveHighscore = async (username, score, time, difficulty) => {
   const database = await initFirestore();

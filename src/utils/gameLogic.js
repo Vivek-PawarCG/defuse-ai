@@ -45,16 +45,25 @@ export function createEmptyBoard(rows, cols) {
   return board;
 }
 
-export function initBoard(rows, cols, totalMines, safeRow, safeCol) {
+/**
+ * Initializes a new Minesweeper board.
+ * @param {number} rows - Number of grid rows.
+ * @param {number} cols - Number of grid columns.
+ * @param {number} mines - Total mine count.
+ * @param {number} startR - Initial safe click row index.
+ * @param {number} startC - Initial safe click column index.
+ * @returns {Array<Array<Object>>} The matrix of tile objects.
+ */
+export const initBoard = (rows, cols, mines, startR, startC) => {
   const board = createEmptyBoard(rows, cols);
 
   // Place mines (avoid 3x3 safe zone around first click)
   let placed = 0;
-  while (placed < totalMines) {
+  while (placed < mines) {
     const r = Math.floor(Math.random() * rows);
     const c = Math.floor(Math.random() * cols);
     if (board[r][c].mine) continue;
-    if (Math.abs(r - safeRow) <= 1 && Math.abs(c - safeCol) <= 1) continue;
+    if (Math.abs(r - startR) <= 1 && Math.abs(c - startC) <= 1) continue;
     board[r][c].mine = true;
     placed++;
   }
@@ -71,11 +80,20 @@ export function initBoard(rows, cols, totalMines, safeRow, safeCol) {
     }
   }
   return board;
-}
+};
 
 // ─── Reveal with Flood Fill ────────────────────────────────
 
-export function revealTileOnBoard(board, rows, cols, r, c) {
+/**
+ * Recursively reveals tiles on the board starting from a given coordinate.
+ * @param {Array<Array<Object>>} board - The current game board.
+ * @param {number} rows - Board rows.
+ * @param {number} cols - Board columns.
+ * @param {number} r - Target row.
+ * @param {number} c - Target column.
+ * @returns {{board: Array<Array<Object>>, tilesRevealed: number, hitMine: boolean}} Updated board, count of revealed tiles, and whether a mine was hit.
+ */
+export const revealTileOnBoard = (board, rows, cols, r, c) => {
   const cell = board[r][c];
   if (cell.revealed || cell.flagged) return { board, tilesRevealed: 0, hitMine: false };
 
@@ -104,11 +122,18 @@ export function revealTileOnBoard(board, rows, cols, r, c) {
   }
 
   return { board: newBoard, tilesRevealed, hitMine: false };
-}
+};
 
 // ─── Flag Toggle ───────────────────────────────────────────
 
-export function toggleFlagOnBoard(board, r, c) {
+/**
+ * Toggles a flag on a specific coordinate.
+ * @param {Array<Array<Object>>} board - The current board.
+ * @param {number} r - Tile row.
+ * @param {number} c - Tile column.
+ * @returns {{board: Array<Array<Object>>, delta: number}} Updated board and the change in flagged tile count (+1 for flag, -1 for unflag, 0 if no change).
+ */
+export const toggleFlagOnBoard = (board, r, c) => {
   const newBoard = board.map(row => row.map(cell => ({ ...cell })));
   const cell = newBoard[r][c];
   if (cell.revealed) return { board: newBoard, delta: 0 };

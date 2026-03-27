@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import FieldManual from './FieldManual.jsx';
 
 const DIFF_KEYS = ['rookie', 'cadet', 'specialist', 'veteran', 'legend'];
@@ -92,3 +93,20 @@ export default function TopBar({
     </>
   );
 }
+
+TopBar.propTypes = {
+  minesRemaining: PropTypes.number.isRequired,
+  time: PropTypes.number.isRequired,
+  difficulty: PropTypes.string.isRequired,
+  personality: PropTypes.string.isRequired,
+  voiceEnabled: PropTypes.bool.isRequired,
+  heatmapEnabled: PropTypes.bool.isRequired,
+  gameOver: PropTypes.bool.isRequired,
+  onSwitchDifficulty: PropTypes.func.isRequired,
+  onSwitchPersonality: PropTypes.func.isRequired,
+  onToggleVoice: PropTypes.func.isRequired,
+  onToggleHeatmap: PropTypes.func.isRequired,
+  onAutoSolve: PropTypes.func.isRequired,
+  onSurrender: PropTypes.func.isRequired,
+  onShowLeaderboard: PropTypes.func.isRequired,
+};
