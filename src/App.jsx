@@ -66,7 +66,12 @@ export default function App() {
   const tilesRevealedRef = useRef(0);
   const firstClickRef = useRef(true);
   const minesRemainingRef = useRef(config.mines);
-  const aiAdviceCountRef = useRef(0); // Added this ref for archiveMission
+  const aiAdviceCountRef = useRef(0);
+
+  // ─── Custom Hooks ──────────────────────────────────────────
+  const timer = useTimer();
+  const audio = useAudio();
+  const rex = useRex();
 
   /**
    * Archive mission data to BigQuery via the backend proxy.
@@ -98,11 +103,6 @@ export default function App() {
   useEffect(() => { minesRemainingRef.current = minesRemaining; }, [minesRemaining]);
 
   const totalSafeTiles = config.rows * config.cols - config.mines;
-
-  // ─── Hooks ───────────────────────────────────────────────
-  const timer = useTimer();
-  const audio = useAudio();
-  const rex = useRex();
 
   // ─── Check API health on mount ───────────────────────────
   useEffect(() => {
