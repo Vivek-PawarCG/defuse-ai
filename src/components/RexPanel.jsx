@@ -36,11 +36,11 @@ export default function RexPanel({ messages, loading, lifelineUsed, gameOver, ai
           id="ai-toggle-btn"
           className={`ai-toggle ${aiEnabled ? 'ai-toggle--on' : 'ai-toggle--off'}`}
           onClick={onToggleAi}
-          title={aiEnabled ? 'Gemini AI Assist ON — click to disable' : 'Gemini AI Assist OFF — click to enable'}
+          title={aiEnabled ? 'Gemini AI Assist ON - click to disable' : 'Gemini AI Assist OFF - click to enable'}
           aria-pressed={aiEnabled}
         >
           <span className="ai-toggle-led"></span>
-          <span className="ai-toggle-label">{aiEnabled ? 'AI ON' : 'AI OFF'}</span>
+          <span className="ai-toggle-label">{aiEnabled ? 'Disable AI' : 'Enable AI'}</span>
         </button>
       </div>
 
