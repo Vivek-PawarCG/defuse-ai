@@ -53,48 +53,33 @@ console.error = (...args) => {
   log.write(log.entry({ severity: 'ERROR' }, text)).catch(() => { });
 };
 
-// ─── Cloud Secret Manager Logic ──────────────────────────────
-const secrets = new SecretManagerServiceClient();
+// ─── Cloud Secret Manager Logic ────────────────────────────────
 /**
- * Load API keys from Secret Manager or Environment.
- * Supports dual-key architecture: Tactical (Gemini) and Agentic (Vertex AI / ADK).
+ * Load Gemini API key from environment or Secret Manager.
+ * On Cloud Run (K_SERVICE is set), falls back to Secret Manager if env is missing.
  */
 let cachedKeys = null;
 async function getApiKeys() {
   if (cachedKeys) return cachedKeys;
 
-  // Defaults from environment
   let geminiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
-  let vertexKey = process.env.VERTEX_AI_API_KEY;
 
-  // Cloud Run / Secret Manager Fallback
-  if ((!geminiKey || !vertexKey) && process.env.K_SERVICE) {
+  // Cloud Run — fetch from Secret Manager if key not in env
+  if (!geminiKey && process.env.K_SERVICE) {
     try {
       const client = new SecretManagerServiceClient();
-      
-      if (!geminiKey) {
-        const [version] = await client.accessSecretVersion({
-          name: `projects/${PROJECT_ID}/secrets/GEMINI_API_KEY/versions/latest`,
-        });
-        geminiKey = version.payload.data.toString();
-      }
-
-      if (!vertexKey) {
-        const [adkVersion] = await client.accessSecretVersion({
-          name: `projects/${PROJECT_ID}/secrets/VERTEX_AI_API_KEY/versions/latest`,
-        });
-        vertexKey = adkVersion.payload.data.toString();
-      }
+      const [version] = await client.accessSecretVersion({
+        name: `projects/${PROJECT_ID}/secrets/GEMINI_API_KEY/versions/latest`,
+      });
+      geminiKey = version.payload.data.toString();
     } catch (err) {
-      console.warn("[SecretManager] Could not load all keys, falling back to env.", err.message);
+      console.warn('[SecretManager] Could not load GEMINI_API_KEY, falling back to env.', err.message);
     }
   }
 
-  cachedKeys = { geminiKey, vertexKey };
-  // Propagate to environment for sub-modules
+  cachedKeys = { geminiKey };
   if (geminiKey) process.env.GEMINI_API_KEY = geminiKey;
-  if (vertexKey) process.env.VERTEX_AI_API_KEY = vertexKey;
-  
+
   return cachedKeys;
 }
 
@@ -182,7 +167,6 @@ async function recordMetric(name, value = 1) {
 app.get('/api/health', async (req, res, next) => {
   const keys = await getApiKeys();
   req.hasKey = !!keys.geminiKey;
-  req.hasVertexKey = !!keys.vertexKey;
   healthHandler(req, res, next);
 });
 

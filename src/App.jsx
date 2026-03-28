@@ -55,7 +55,8 @@ export default function App() {
   const [victoryStats, setVictoryStats] = useState('');
   const [shakeClass, setShakeClass] = useState('');
   const [apiReady, setApiReady] = useState(false);
-  const [strategicDebrief, setStrategicDebrief] = useState(null); // null=loading | ''=unavailable | string=ready
+  const [strategicDebrief, setStrategicDebrief] = useState(null);
+  const [aiEnabled, setAiEnabled] = useState(false); // OFF by default — saves quota
 
   // ─── Refs for mutable state (avoid stale closures) ──────
   const moveHistoryRef = useRef([]);
@@ -174,13 +175,13 @@ export default function App() {
     firstClickRef.current = true;
     tilesRevealedRef.current = 0;
     minesRemainingRef.current = cfg.mines;
-    aiAdviceCountRef.current = 0; // Reset AI advice count
-    setStrategicDebrief(null); // Reset debrief for new game
+    aiAdviceCountRef.current = 0;
+    setStrategicDebrief(null);
 
     trackEvent('mission_start', { difficulty });
   }, [difficulty, timer]);
 
-  // ─── Handle Victory ─────────────────────────────────────
+  // ─── Handle Victory ───────────────────────────────────
   const handleVictory = useCallback(async (currentBoard) => {
     setGameOver(true);
     gameOverRef.current = true;
@@ -193,22 +194,30 @@ export default function App() {
 
     setShowVictory(true);
 
-    const styleSummary = getPlayerStyleSummary(clickPatternsRef.current);
-    const prompt = JSON.stringify({ action: 'victory', tilesCleared: totalSafeTiles, timeElapsed: timeVal, flagsUsed: flagsVal });
+    let mainSpeech, title;
 
-    const speech = await rex.callRex(
-      `Soldier has cleared the entire minefield! Give an emotional 4 sentence celebration. Award the soldier a legendary field title (something creative and epic, like "The Ghost Walker" or "Iron Nerve").${styleSummary ? ' Weave in this observation about their style: ' + styleSummary : ''} End your message with "Field Title Awarded: [TITLE]" on its own line. Context: ${prompt}`,
-      personality,
-    );
+    if (aiEnabled) {
+      const styleSummary = getPlayerStyleSummary(clickPatternsRef.current);
+      const prompt = JSON.stringify({ action: 'victory', tilesCleared: totalSafeTiles, timeElapsed: timeVal, flagsUsed: flagsVal });
 
-    const speechText = speech || "You magnificent rookie. You walked through hell and came out the other side with all your limbs. Not many can say that. From this day forward, you carry the name of a legend.";
+      const speech = await rex.callRex(
+        `Soldier has cleared the entire minefield! Give an emotional 4 sentence celebration. Award the soldier a legendary field title (something creative and epic, like "The Ghost Walker" or "Iron Nerve").${styleSummary ? ' Weave in this observation about their style: ' + styleSummary : ''} End your message with "Field Title Awarded: [TITLE]" on its own line. Context: ${prompt}`,
+        personality,
+      );
 
-    let mainSpeech = speechText;
-    let title = 'THE PHANTOM SWEEPER';
-    const titleMatch = speechText.match(/Field Title Awarded:\s*(.+)/i);
-    if (titleMatch) {
-      title = titleMatch[1].trim().replace(/[*"]/g, '');
-      mainSpeech = speechText.replace(/Field Title Awarded:\s*.+/i, '').trim();
+      const speechText = speech || "You magnificent rookie. You walked through hell and came out the other side with all your limbs. Not many can say that. From this day forward, you carry the name of a legend.";
+      const titleMatch = speechText.match(/Field Title Awarded:\s*(.+)/i);
+      title = titleMatch ? titleMatch[1].trim().replace(/[*"]/g, '') : 'THE PHANTOM SWEEPER';
+      mainSpeech = titleMatch ? speechText.replace(/Field Title Awarded:\s*.+/i, '').trim() : speechText;
+    } else {
+      // AI OFF — static fallback based on personality
+      const fallbacks = {
+        'drill-sergeant': "Outstanding soldier. The minefield is clear. You stood your ground and didn't flinch. That's what separates the living from the dead out here.",
+        'mentor':         "Well done. A calm, methodical approach got you through. Remember this feeling — this is what good decision-making looks like under pressure.",
+        'comedian':       "You actually survived. I'm genuinely shocked. Frame this moment, because miracles this size don't come twice.",
+      };
+      mainSpeech = fallbacks[personality] || fallbacks['drill-sergeant'];
+      title = 'THE PHANTOM SWEEPER';
     }
 
     setVictorySpeech(mainSpeech);
@@ -218,7 +227,7 @@ export default function App() {
     trackEvent('mission_success', { difficulty, time: timeVal, score: totalSafeTiles });
     await archiveMission('success');
     fetchStrategicDebrief('success');
-  }, [timer, audio, rex, personality, totalSafeTiles, flagsUsed, archiveMission, fetchStrategicDebrief]);
+  }, [timer, audio, rex, personality, totalSafeTiles, flagsUsed, aiEnabled, archiveMission, fetchStrategicDebrief]);
 
   // ─── Handle Explosion ───────────────────────────────────
   const handleExplosion = useCallback(async (r, c, isSurrender = false, currentBoard) => {
@@ -263,10 +272,30 @@ export default function App() {
       ? `The rookie surrendered and gave up. Give a ${personality === 'comedian' ? 'sarcastically funny' : personality === 'mentor' ? 'understanding but disappointed' : 'harsh and disgusted'} 2-sentence tactical commentary.${styleSummary ? ' Player style context: ' + styleSummary : ''} End with "MISSION ABORTED".`
       : `The rookie just triggered a mine and died. The mission failed.\nHere are their last few moves: ${moveLog}.\n${missedList ? `IMPORTANT: The soldier could have logically deduced that tile(s) [${missedList}] were mines BEFORE clicking. Mention this specifically.` : ''}\n${styleSummary ? `Player style context: ${styleSummary}` : ''}\nBased on Minesweeper logic, brutally point out their fatal mistake or logical error.\nGive a dramatic, ${personality === 'comedian' ? 'sarcastically funny' : 'harsh'} tactical analysis.\nEnd with "MISSION FAILED". Max 4 sentences.`;
 
-    const eulogy = await rex.callRex(gameOverPrompt, personality);
-    const eulogyText = eulogy || (isSurrender
-      ? "Retreating from the field. Some battles aren't meant to be won today."
-      : "That rookie had guts. More guts than brains, but guts nonetheless. The field claims another.");
+    let eulogyText;
+    if (aiEnabled) {
+      const eulogy = await rex.callRex(gameOverPrompt, personality);
+      eulogyText = eulogy || (isSurrender
+        ? "Retreating from the field. Some battles aren't meant to be won today."
+        : "That rookie had guts. More guts than brains, but guts nonetheless. The field claims another.");
+    } else {
+      // AI OFF — static fallback based on result + personality
+      if (isSurrender) {
+        const surrenderFallbacks = {
+          'drill-sergeant': "MISSION ABORTED. You chose to live another day. I'd call it cowardice, but a dead soldier doesn't clear any more fields.",
+          'mentor':         "It's okay to know your limits. Come back when you're ready. The field will still be here. MISSION ABORTED.",
+          'comedian':       "Bold strategy — quitting. Statistically your best chance of survival. MISSION ABORTED.",
+        };
+        eulogyText = surrenderFallbacks[personality] || surrenderFallbacks['drill-sergeant'];
+      } else {
+        const explosionFallbacks = {
+          'drill-sergeant': "That rookie had guts. More guts than brains, but guts nonetheless. The field claims another. MISSION FAILED.",
+          'mentor':         "A tough break. Every loss is a lesson. Study what went wrong and come back sharper. MISSION FAILED.",
+          'comedian':       "Well. That happened. At least it was quick. Relatively. MISSION FAILED.",
+        };
+        eulogyText = explosionFallbacks[personality] || explosionFallbacks['drill-sergeant'];
+      }
+    }
 
     setGameOverEulogy(eulogyText);
     audio.speakRex(eulogyText, personality, true);
@@ -275,7 +304,7 @@ export default function App() {
     const archiveResult = isSurrender ? 'surrender' : 'fail';
     await archiveMission(archiveResult);
     fetchStrategicDebrief(archiveResult);
-  }, [timer, audio, rex, personality, config, archiveMission, fetchStrategicDebrief]);
+  }, [timer, audio, rex, personality, config, aiEnabled, archiveMission, fetchStrategicDebrief]);
 
   // ─── Reveal Tile ─────────────────────────────────────────
   const revealTile = useCallback((r, c) => {
@@ -344,40 +373,46 @@ export default function App() {
       return;
     }
 
-    // Rex commentary (skip during auto-solve)
+    // Rex commentary (skip during auto-solve and when AI is disabled)
     if (!autoSolvingRef.current) {
-      let rexHint = '';
-      if (cell.adjacentMines === 0) {
-        rexHint = 'The area is clear (0 adjacent mines). Respond with calm relief but tell soldier to stay alert.';
-      } else if (cell.adjacentMines <= 2) {
-        rexHint = `There are ${cell.adjacentMines} mine(s) nearby. Respond with caution, mention nearby danger.`;
-      } else {
-        rexHint = `HOT ZONE! ${cell.adjacentMines} adjacent mines! Respond with high tension and hot zone warning.`;
-      }
+      const fallback = cell.adjacentMines === 0
+        ? "Clear sector. Move forward, soldier."
+        : cell.adjacentMines <= 2
+          ? `${cell.adjacentMines} contact${cell.adjacentMines > 1 ? 's' : ''} nearby. Watch your step.`
+          : `Hot zone! ${cell.adjacentMines} devices detected. Do NOT rush this.`;
 
-      const prompt = JSON.stringify({
-        action: 'safe_click', tile: label, adjacentMines: cell.adjacentMines,
-        minesRemaining: minesRemainingRef.current, tilesLeft: totalSafeTiles - newTotal, timeElapsed: timer.time,
-      });
-
-      rex.callRex(
-        `Soldier just revealed tile ${label}. ${rexHint} Context: ${prompt}`,
-        personality,
-      ).then(response => {
-        if (response) {
-          rex.addMessage(response, prompt);
-          audio.speakRex(response, personality, voiceEnabled);
+      if (aiEnabled) {
+        let rexHint = '';
+        if (cell.adjacentMines === 0) {
+          rexHint = 'The area is clear (0 adjacent mines). Respond with calm relief but tell soldier to stay alert.';
+        } else if (cell.adjacentMines <= 2) {
+          rexHint = `There are ${cell.adjacentMines} mine(s) nearby. Respond with caution, mention nearby danger.`;
         } else {
-          const fallback = cell.adjacentMines === 0
-            ? "Clear sector. Move forward, soldier."
-            : cell.adjacentMines <= 2
-              ? `${cell.adjacentMines} contact${cell.adjacentMines > 1 ? 's' : ''} nearby. Watch your step.`
-              : `Hot zone! ${cell.adjacentMines} devices detected. Do NOT rush this.`;
-          rex.addMessage(fallback, prompt);
+          rexHint = `HOT ZONE! ${cell.adjacentMines} adjacent mines! Respond with high tension and hot zone warning.`;
         }
-      });
+
+        const prompt = JSON.stringify({
+          action: 'safe_click', tile: label, adjacentMines: cell.adjacentMines,
+          minesRemaining: minesRemainingRef.current, tilesLeft: totalSafeTiles - newTotal, timeElapsed: timer.time,
+        });
+
+        rex.callRex(
+          `Soldier just revealed tile ${label}. ${rexHint} Context: ${prompt}`,
+          personality,
+        ).then(response => {
+          if (response) {
+            rex.addMessage(response, prompt);
+            audio.speakRex(response, personality, voiceEnabled);
+          } else {
+            rex.addMessage(fallback, prompt);
+          }
+        });
+      } else {
+        // AI OFF — instant fallback, zero API cost
+        rex.addMessage(fallback, label);
+      }
     }
-  }, [config, timer, audio, rex, personality, voiceEnabled, heatmapEnabled, totalSafeTiles, handleExplosion, handleVictory]);
+  }, [config, timer, audio, rex, personality, voiceEnabled, heatmapEnabled, totalSafeTiles, aiEnabled, handleExplosion, handleVictory]);
 
   // ─── Flag Tile ───────────────────────────────────────────
   const flagTile = useCallback((r, c) => {
@@ -527,6 +562,20 @@ export default function App() {
     resetGame(newDifficulty);
   }, [difficulty, gameStarted, resetGame]);
 
+  // ─── AI Toggle ──────────────────────────────────────
+  const toggleAiEnabled = useCallback(() => {
+    setAiEnabled(prev => {
+      const next = !prev;
+      rex.addMessage(
+        next
+          ? '[ GEMINI AI ASSIST ENABLED ] Colonel Rex is now using live AI analysis.'
+          : '[ GEMINI AI ASSIST DISABLED ] Falling back to standard radio protocols. Quota preserved.',
+        'System'
+      );
+      return next;
+    });
+  }, [rex]);
+
   // ─── Voice Toggle ───────────────────────────────────────
   const toggleVoice = useCallback(() => {
     setVoiceEnabled(prev => {
@@ -632,6 +681,7 @@ export default function App() {
             // Rex
             rexMessages={rex.messages}
             rexLoading={rex.loading}
+            aiEnabled={aiEnabled}
             // Actions
             onRevealTile={revealTile}
             onFlagTile={flagTile}
@@ -643,6 +693,7 @@ export default function App() {
             onSurrender={handleSurrender}
             onSendLifeline={sendLifeline}
             onRetry={retry}
+            onToggleAi={toggleAiEnabled}
             onReviewBoard={dismissGameOver}
             onReturnToBase={returnToBase}
             onNextMission={nextMission}

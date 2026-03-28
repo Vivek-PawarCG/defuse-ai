@@ -611,7 +611,79 @@ body,
     background: rgba(0, 255, 65, 0.04);
     border-bottom: 1px solid rgba(0, 255, 65, 0.1);
     flex-shrink: 0;
+    gap: 0.5rem;
 }
+
+/* Push toggle to the right */
+.rex-header > span:last-of-type {
+    flex: 1;
+}
+
+/* ─── AI ASSIST TOGGLE ───────────────────────────── */
+.ai-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0.2rem 0.45rem;
+    border-radius: 20px;
+    border: 1px solid;
+    cursor: pointer;
+    font-family: var(--font-heading);
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: transparent;
+    transition: all 0.25s ease;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.ai-toggle--on {
+    border-color: var(--green);
+    color: var(--green);
+    box-shadow: 0 0 8px rgba(0, 255, 65, 0.25);
+}
+
+.ai-toggle--off {
+    border-color: #444;
+    color: #555;
+}
+
+.ai-toggle-led {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: all 0.25s ease;
+}
+
+.ai-toggle--on .ai-toggle-led {
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green), 0 0 10px rgba(0, 255, 65, 0.5);
+    animation: led-pulse 2s ease-in-out infinite;
+}
+
+.ai-toggle--off .ai-toggle-led {
+    background: #444;
+    box-shadow: none;
+}
+
+.ai-toggle:hover.ai-toggle--off {
+    border-color: var(--green-dim);
+    color: var(--green-dim);
+}
+
+.ai-toggle:hover.ai-toggle--off .ai-toggle-led {
+    background: var(--green-dim);
+}
+
+@keyframes led-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.6; }
+}
+
+
 
 .rex-messages {
     flex: 1;

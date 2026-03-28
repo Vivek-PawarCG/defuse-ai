@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 
-export default function RexPanel({ messages, loading, lifelineUsed, gameOver, onSendLifeline }) {
+export default function RexPanel({ messages, loading, lifelineUsed, gameOver, aiEnabled, onSendLifeline, onToggleAi }) {
   const messagesEndRef = useRef(null);
   const [showLifelineInput, setShowLifelineInput] = useState(false);
   const [lifelineValue, setLifelineValue] = useState('');
@@ -30,6 +30,18 @@ export default function RexPanel({ messages, loading, lifelineUsed, gameOver, on
       <div className="rex-header">
         <span className="blink-dot"></span>
         <span>COL. REX — RADIO COMMS</span>
+
+        {/* ── AI Assist Toggle ──────────────────────────── */}
+        <button
+          id="ai-toggle-btn"
+          className={`ai-toggle ${aiEnabled ? 'ai-toggle--on' : 'ai-toggle--off'}`}
+          onClick={onToggleAi}
+          title={aiEnabled ? 'Gemini AI Assist ON — click to disable' : 'Gemini AI Assist OFF — click to enable'}
+          aria-pressed={aiEnabled}
+        >
+          <span className="ai-toggle-led"></span>
+          <span className="ai-toggle-label">{aiEnabled ? 'AI' : 'AI'}</span>
+        </button>
       </div>
 
       <div className="rex-messages" aria-live="polite" aria-atomic="false">
