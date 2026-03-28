@@ -1,9 +1,18 @@
-# DEFUSE — Reimagining Minesweeper with Gemini
+# DEFUSE — Reimagining Minesweeper with Dual AI
 
-**We turned the 90s puzzle into a cinematic bomb disposal simulator where Gemini AI acts as a live "Field Commander."**
+**A cinematic bomb disposal simulator where two AI systems watch over every mission — Colonel Rex calls real-time tactics, Major Steele debriefs with data.**
 
-## 🧠 AI as a Dynamic Metagame
-Guided by **Colonel Rex** (powered by Google's Generative AI), Gemini analyzes exact gameplay telemetry—tile coordinates and adjacent mines—to generate spoken tactical advice or panicked warnings on the fly. 
+---
+
+## 🧠 Dual-AI Architecture
+
+### Colonel Rex (Tactical — `@google/generative-ai`)
+Powered by **Gemini 2.5 Flash Lite** via the Google Generative AI SDK. Generates real-time, personality-driven commentary on every tile reveal, flagging high-danger zones and celebrating near-misses — with zero latency because it runs async. Players control usage with an **AI ON / AI OFF toggle** that preserves API quota and degrades gracefully to personality-matched fallback dialogue.
+
+### Major Steele (Strategic — `@google-cloud/vertexai`)
+Powered by **Vertex AI Gemini 2.5 Flash Lite** with **function calling**. Fires after every game end (victory or loss) to pull mission archive data from **BigQuery** and generate a data-grounded Strategic Debrief embedded directly in the victory/game-over overlay. Uses **Application Default Credentials (ADC)** — no API key required in Cloud Run.
+
+---
 
 ## 🏗️ System Architecture
 
@@ -12,86 +21,117 @@ graph TD
     subgraph "Frontend (React + Vite)"
         UI[Terminal UI]
         GL[Game Logic Engine]
-        AA[App Check / reCaptcha v3]
+        AT[AI Toggle — ON/OFF]
         AN[Firebase Analytics]
         TTS[Web Speech API]
     end
 
-    subgraph "Backend (Node.js Proxy)"
+    subgraph "Backend (Node.js / Cloud Run)"
         SRV[Express Server]
         SEC[Helmet CSP / Rate Limit]
         GPM[GCP Metric Service]
-        CFG[Runtime Config Handshake]
-    end
-
-    subgraph "Google Cloud Ecosystem"
-        GEM[Gemini 2.5/3.1 Flash]
-        DB[(Firebase Firestore)]
         SM[Secret Manager]
         LOG[Cloud Logging]
-        MON[Cloud Monitoring]
+    end
+
+    subgraph "Google AI Layer"
+        GEM[Gemini Flash Lite — Colonel Rex]
+        VTX[Vertex AI — Major Steele]
+    end
+
+    subgraph "Data Layer"
+        BQ[(BigQuery — Mission Archives)]
+        FS[(Firebase Firestore — Leaderboard)]
     end
 
     UI --> GL
     GL --> SRV
+    AT --> GL
     SRV --> SEC
     SEC --> GEM
-    GL --> AA
-    GL --> AN
-    AA --> DB
+    VTX -->|Function Calling| BQ
+    SRV --> VTX
     SRV --> SM
     SRV --> LOG
     SRV --> GPM
-    GPM --> MON
-    SRV --> CFG
+    GL --> AN
     GL --> TTS
+    GL --> FS
 ```
 
 ---
 
-## ⚡ Technical Optimizations
+## ⚡ What Changed in the Final Submission
 
-For our 2026 hackathon submission, we pushed for near-perfect scores across five critical engineering pillars.
+### 🤖 AI Upgrade — From Broken to Production
+- **Removed `@google/adk`** — the ADK agent never reached production (500 errors, no IAM, premature library). Replaced with a clean direct Vertex AI SDK implementation.
+- **Removed the "Command Center"** screen — the standalone ADK chat UI was cut. The debrief is now embedded directly in the post-game overlays, making it part of the natural game flow.
+- **Fixed BigQuery retrieval** — added `ensureArchivesExist()` that self-heals the dataset and table on first run. Previously the query failed silently when the table didn't exist.
+- **Vertex AI Function Calling** — `getStrategicDebrief()` follows the correct two-turn pattern: model requests `query_mission_history` → backend executes BigQuery → model receives results → generates grounded debrief.
 
-### 1. 💎 Code Quality & Structure
-*   **Modular Separation**: Isolated the core mathematical engine (`gameLogic.js`) from the React rendering layer for 100% logic purity.
-*   **Enterprise Standards**: Every utility and backend function is fully documented with **JSDoc** for professional-grade maintainability.
-*   **100% Code Quality**: Modular React components, full JSDoc, Tier-1 clean code.
-- **100% Security**: Firebase App Check, reCaptcha v3, Strict CSP, Helmet security.
-- **100% Efficiency**: Gzip, LRU Caching, Gemini Flash 1.5 Lite.
-- **100% Testing**: Vitest Unit & Integration suites.
-- **100% Accessibility**: Aria-labels, full keyboard navigation, High Contrast modes.
-- **100% Google Services**: Dual-Agent system (Rex + Major Steele), BigQuery Archival, Google Cloud Monitoring/Logging, Firebase Ecosystem.
-*   **Cost Optimization**: Utilized the browser's native **Web Speech API** for voice synthesis, saving thousands in expensive TTS API fees.
-*   **Traffic Compression**: Enabled **Gzip/Brotli compression** in Express to minimize the transfer size of serialized board states as players reveal tiles.
-*   **Professional Observability**: Integrated **Google Cloud Monitoring** for real-time tracking of AI latency and request counts, ensuring zero-waste resource allocation.
-
-### 4. 🧪 Testing & Stability
-*   **Logic & Component Validation**: Integrated **Vitest** for comprehensive unit testing of board generation and component rendering.
-*   **Zero-Crash Resilience**: Implemented a global **React Error Boundary** with a diegetic "CRITICAL HARDWARE FAILURE" fallback.
-*   **Fault Tolerance**: Built-in fallback algorithms trigger context-appropriate local dialogue if Gemini exceeds 429/500 limits.
-
-### 5. ♿ Accessibility & Inclusion
-*   **100% ARIA Compliance**: The entire minefield is mapped with coordinates (A1, B2) and status labels for screen readers.
-*   **Semantic HTML**: Used `role="grid"` and `role="button"` to ensure standard interaction paths for diverse users.
-*   **Keyboard Mastery**: Full navigability via keyboard (Enter to Reveal, Space/F to Flag) for players who cannot use a mouse.
-
-### 6. 🚀 Google Services Integration
-*   **Dual-Agent Architecture**: 
-  - **Colonel Rex (Tactical)**: Web-based real-time radio comms.
-  - **Major Steele (Strategic)**: Backend **Agent Development Kit (ADK)** agent with tool-calling capabilities.
-- **Data Warehousing**: Automated sync from Firestore to **BigQuery** via Cloud Functions for long-term career analytics.
-- **Observability**: Custom Google Cloud Monitoring metrics for AI latency and request volume.
-*   **Firebase Ecosystem**: Firestore high-scores, Google Analytics telemetry, and **App Check (reCaptcha v3)**.
-*   **Google Cloud Platform**: Cloud Run (compute), **Cloud Monitoring (Custom Metrics)**, Cloud Logging (observability), and Secret Manager (security).
-*   **Enterprise Identity**: Zero-Key authentication using **Application Default Credentials (ADC)** and custom **Service Accounts** for secure internal service-to-service communication.
+### 💡 AI Assist Toggle
+Added a **`● AI ON / ○ AI OFF`** toggle button in the Colonel Rex panel header.
+- When OFF, Rex responds with personality-matched static dialogue - zero API cost, zero latency
+- Switching logs a system message in the Rex feed confirming the state change
 
 ---
 
-### ⚙️ How the Solution Works
-1.  **Frontend Interface**: A responsive React app running on Vite with a CRT/Military terminal aesthetic.
-2.  **Serverless Proxy**: Node.js backend acting as a secure gateway to Gemini AI, shielding secrets and enforcing rate limits.
-3.  **The Lifeline System**: Players can use an "Emergency Radio" to query Gemini about any tile. Gemini is fed the *absolute truth* and roleplays the analysis.
-4.  **Voice Interaction**: Colonel Rex speaks directly to you using the native browser speech engine for an immersive, zero-cost UX.
+## 🚀 Google Services Integration
 
-*The mines are buried, but with Gemini, defusing them is infinitely cinematic.* 💣🚁🎖️🏆
+| Service | SDK / Tool | Role |
+|---|---|---|
+| **Gemini Flash Lite** | `@google/generative-ai` | Colonel Rex — real-time tile commentary |
+| **Vertex AI** | `@google-cloud/vertexai` | Major Steele — strategic post-game debrief |
+| **BigQuery** | `@google-cloud/bigquery` | Mission archive — queried by Vertex AI via function calling |
+| **Cloud Monitoring** | `@google-cloud/monitoring` | Custom metrics: `mission_archived`, `vertex_debrief_requests` |
+| **Cloud Logging** | `@google-cloud/logging` | Structured request and error logs |
+| **Secret Manager** | `@google-cloud/secret-manager` | Secure `GEMINI_API_KEY` retrieval on Cloud Run |
+| **Cloud Run** | GCP | Containerized Node.js backend |
+| **Firebase Firestore** | Firebase SDK | Global leaderboard |
+| **Firebase Analytics** | Firebase SDK | Game event telemetry |
+| **Firebase AppCheck** | Firebase SDK | Anti-abuse on leaderboard writes |
+
+---
+
+## ⚙️ How It Works End-to-End
+
+1. **Game Start** — React app loads with AI assist OFF. Player clicks the `● AI ON` button to enable Gemini commentary.
+2. **Every Tile Reveal** — if AI is ON, Rex calls Gemini with tile coordinates + adjacency context. If OFF, instant fallback dialogue fires.
+3. **Emergency Radio (Lifeline)** — player can query Rex once per game for targeted intel on any tile coordinate.
+4. **Game Ends** — the backend fires two concurrent calls:
+   - `/api/archive` → inserts mission row into BigQuery
+   - `/api/agent/debrief` → Vertex AI calls `query_mission_history` (BigQuery), receives stats, generates 3–4 sentence data-grounded debrief
+5. **Overlay** — both Victory and Game Over screens render the debrief with a "Analyzing mission archives..." skeleton while Vertex AI responds.
+
+---
+
+## 🔐 Security
+
+- **Helmet.js** with strict `Content-Security-Policy`
+- **Rate limiting** on all `/api/` routes
+- **Secret Manager** for key management — no keys in source or image
+- **ADC** for Vertex AI / BigQuery — service-to-service, zero keys
+- **Firebase App Check (reCaptcha v3)** — anti-abuse on leaderboard writes
+
+---
+
+## 🛠️ Local Development
+
+```bash
+npm install
+cp .env.example .env   # add GEMINI_API_KEY
+npm run dev            # Vite frontend on :5173
+node server.js         # Express backend on :3000
+```
+
+## 🐳 Docker / Cloud Run
+
+```bash
+docker build -t defuse-ai .
+docker run -p 8080:8080 \
+  -e GEMINI_API_KEY=your_key \
+  -e GOOGLE_CLOUD_PROJECT=your_project \
+  defuse-ai
+```
+
+*The mines are buried. With Gemini, defusing them is cinematic.* 💣🎖️

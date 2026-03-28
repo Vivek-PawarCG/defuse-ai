@@ -1,17 +1,15 @@
-Defuse - Reimagining Minesweeper with Gemini
-The 90s classic is now a cinematic bomb disposal simulator with Gemini as a live "Field Commander."
+Defuse AI — Reimagining Minesweeper with Dual AI
 
-🧠 AI Dynamic Metagame
-Guided by Colonel Rex (powered by Google's Generative AI), the app analyzes real-time gameplay telemetry, tile coordinates and adjacent mines, to generate spoken tactical advice and panicked warnings on the fly. 
+The 90s classic is now a cinematic bomb disposal simulator with two AI systems at work.
 
-⚙️ Optimization & Resilience
-*   Lifelines: Ask Gemini for intel on hidden tiles, risking accurate data or "signal interference."
-*   Fail-Safe: API limits trigger a switch to local dialogue. Native Web Speech API ensures fast, tiny-bundle voice generation.
-*  100% Accessibility, 100% Security with Testing & Best Practices
+🧠 Dual-AI System
+Colonel Rex (Gemini AI) delivers real-time tactical commentary on every tile reveal. An AI ON/OFF toggle lets players control API usage - OFF switches to instant fallback dialogue. 
+Major Steele (Vertex AI) fires after each game, using function calling to query BigQuery mission archives and generate a data-grounded Strategic Debrief inside the overlay.
 
-🚀 100% use of Google Services
-*   Cloud Run: Serverless Node.js backend for UI and secure ML APIs.
-*   Firebase: Global "Hall of Fame" leaderboard with real-time sync.
-*   Cloud Logging: Enterprise-grade observability and real-time monitoring.
+⚙️ Google Services Pipeline
+Cloud Run hosts the Node.js backend. Secret Manager secures the Gemini key. BigQuery stores mission telemetry queried live by Vertex AI. Cloud Monitoring tracks requests. Firebase handles the leaderboard.
 
-The mines are buried, but with Gemini, defusing them is cinematic 💣
+🔐 Security
+Helmet CSP, rate limiting, ADC for Vertex AI and BigQuery, App Check on leaderboard writes.
+
+The mines are buried. With Gemini, defusing them is cinematic. 💣

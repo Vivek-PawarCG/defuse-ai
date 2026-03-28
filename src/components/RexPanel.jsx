@@ -40,7 +40,7 @@ export default function RexPanel({ messages, loading, lifelineUsed, gameOver, ai
           aria-pressed={aiEnabled}
         >
           <span className="ai-toggle-led"></span>
-          <span className="ai-toggle-label">{aiEnabled ? 'AI' : 'AI'}</span>
+          <span className="ai-toggle-label">{aiEnabled ? 'AI ON' : 'AI OFF'}</span>
         </button>
       </div>
 
