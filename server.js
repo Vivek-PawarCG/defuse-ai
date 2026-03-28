@@ -10,7 +10,7 @@ import { Logging } from '@google-cloud/logging';
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 import { BigQuery } from '@google-cloud/bigquery';
 import { MetricServiceClient } from '@google-cloud/monitoring';
-import { getSteeleModel, runSteeleTool } from './api/agent/majorSteele.js';
+import { getStrategicDebrief } from './api/agent/majorSteele.js';
 
 import chatHandler from './api/gemini/chat.js';
 import healthHandler from './api/health.js';
@@ -230,107 +230,43 @@ async function recordToBigQuery(data) {
 }
 
 app.post('/api/archive', async (req, res) => {
-  // Ensure table exists (best effort for hackathon)
   const { difficulty, result, timeSpent, tilesCleared, aiAdviceCount } = req.body;
+  recordMetric('mission_archived', 1);
   await recordToBigQuery({ difficulty, result, timeSpent, tilesCleared, aiAdviceCount });
-  res.status(200).json({ status: "archived" });
+  res.status(200).json({ status: 'archived' });
 });
 
 /**
- * Agentic Chat Endpoint.
- * Faciliates conversation with Major Steele via the Google Cloud ADK.
+ * Strategic Debrief Endpoint — Vertex AI + BigQuery.
+ * Fires after each game ends (victory or game over).
+ * Accepts structured mission data, returns a data-grounded analysis
+ * from Major Steele using Vertex AI function calling + BigQuery archives.
  */
-app.post('/api/agent/chat', async (req, res) => {
-  const { message } = req.body;
+app.post('/api/agent/debrief', async (req, res) => {
+  const { difficulty, result, timeSpent, tilesCleared, aiAdviceCount } = req.body;
 
-  // ── Pre-flight validation ─────────────────────────────────
-  if (!message || typeof message !== 'string' || !message.trim()) {
-    return res.status(400).json({ error: 'Missing or empty message body.' });
+  // ── Pre-flight validation ──────────────────────────────────
+  if (!difficulty || !result) {
+    return res.status(400).json({ error: 'Missing required fields: difficulty, result.' });
   }
 
   try {
-    // ── Environment checks ────────────────────────────────────
-    if (!PROJECT_ID) {
-      console.error('[Agent] CRITICAL: GOOGLE_CLOUD_PROJECT is not set.');
-      return res.status(500).json({ error: 'Server misconfiguration: missing project ID.' });
+    recordMetric('vertex_debrief_requests', 1);
+    console.log(`[Debrief] Request | difficulty=${difficulty} result=${result} time=${timeSpent}s`);
+
+    const debrief = await getStrategicDebrief({ difficulty, result, timeSpent, tilesCleared, aiAdviceCount });
+
+    if (!debrief) {
+      // getStrategicDebrief logs its own errors; return null so frontend shows fallback
+      return res.status(200).json({ debrief: null });
     }
 
-    console.log(`[Agent] Incoming request | project=${PROJECT_ID} | message_len=${message.length}`);
-
-    const model = getSteeleModel();
-    console.log('[Agent] Vertex AI model instantiated. Calling generateContent...');
-
-    let result = await model.generateContent(message);
-    let response = result.response;
-
-    // ── Guard: check candidates exist ─────────────────────────
-    if (!response?.candidates?.length) {
-      console.error('[Agent] No candidates returned from Vertex AI:', JSON.stringify(response));
-      return res.status(502).json({
-        error: 'Vertex AI returned no candidates.',
-        raw: response,
-      });
-    }
-
-    let parts = response.candidates[0].content.parts;
-
-    // ── Handle single-turn function calling ───────────────────
-    const functionCallPart = parts.find(p => p.functionCall);
-    if (functionCallPart) {
-      const { name, args } = functionCallPart.functionCall;
-      console.log(`[Agent] Function call detected: ${name}`, args);
-      const toolResult = await runSteeleTool(name, args);
-      console.log(`[Agent] Tool result for ${name}:`, JSON.stringify(toolResult));
-
-      const secondaryResult = await model.generateContent({
-        contents: [
-          { role: 'user', parts: [{ text: message }] },
-          { role: 'model', parts: [functionCallPart] },
-          {
-            role: 'user',
-            parts: [{
-              functionResponse: { name, response: { content: toolResult } }
-            }]
-          }
-        ]
-      });
-      response = secondaryResult.response;
-
-      if (!response?.candidates?.length) {
-        console.error('[Agent] No candidates after tool call:', JSON.stringify(response));
-        return res.status(502).json({ error: 'No candidates returned after tool call.', raw: response });
-      }
-    }
-
-    const finalResponse = response.candidates[0].content.parts[0].text;
-    console.log('[Agent] Success. Responding to client.');
-    res.status(200).json({ response: finalResponse });
+    console.log('[Debrief] Strategic analysis complete. Sending to client.');
+    res.status(200).json({ debrief });
 
   } catch (err) {
-    // ── Detailed error logging ────────────────────────────────
-    const errDetail = {
-      message:    err.message,
-      name:       err.name,
-      code:       err.code,
-      status:     err.status ?? err.statusCode,
-      stack:      err.stack,
-      // Vertex AI / gRPC errors sometimes have these
-      details:    err.details,
-      metadata:   err.metadata ? Object.fromEntries(err.metadata) : undefined,
-      response:   err.response?.data ?? err.response,
-    };
-    console.error('[Intelligence Office] /api/agent/chat FAILED:', JSON.stringify(errDetail, null, 2));
-
-    res.status(500).json({
-      error: 'Major Steele is currently dealing with high-priority intel. Try again shortly.',
-      // Include diagnostic info (strip in production if needed)
-      debug: {
-        message: err.message,
-        code:    err.code,
-        status:  err.status ?? err.statusCode,
-        details: err.details,
-      },
-    });
+    console.error('[Debrief] Unexpected error:', err.message, err.stack);
+    res.status(200).json({ debrief: null }); // Soft fail — frontend handles null gracefully
   }
 });
 

@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 
-export default function RexPanel({ messages, loading, lifelineUsed, gameOver, onSendLifeline, onOpenCommandCenter }) {
+export default function RexPanel({ messages, loading, lifelineUsed, gameOver, onSendLifeline }) {
   const messagesEndRef = useRef(null);
   const [showLifelineInput, setShowLifelineInput] = useState(false);
   const [lifelineValue, setLifelineValue] = useState('');
@@ -50,21 +50,20 @@ export default function RexPanel({ messages, loading, lifelineUsed, gameOver, on
         </div>
       )}
 
-      <div className="lifeline-container" style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+      <div className="lifeline-container">
         {!showLifelineInput ? (
           <button
             className="btn-lifeline"
             onClick={handleLifelineClick}
             disabled={lifelineUsed || gameOver}
-            style={{ width: '100%', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            <span className="lifeline-icon" style={{ marginRight: '0.5rem' }}>⚠</span>
+            <span className="lifeline-icon">⚠</span>
             {lifelineUsed ? 'EMERGENCY RADIO — USED' : 'EMERGENCY RADIO (1x USE)'}
           </button>
         ) : (
-          <div className="lifeline-input-area" style={{ display: 'block' }}>
-            <label htmlFor="lifeline-input" style={{ fontSize: '0.65rem', marginBottom: '0.3rem', display: 'block', color: 'var(--text-dim)' }}>What's your intel request, soldier?</label>
-            <div className="lifeline-input-row" style={{ display: 'flex', gap: '0.4rem' }}>
+          <div className="lifeline-input-area">
+            <label htmlFor="lifeline-input">What's your intel request, soldier?</label>
+            <div className="lifeline-input-row">
               <input
                 type="text"
                 id="lifeline-input"
@@ -75,22 +74,11 @@ export default function RexPanel({ messages, loading, lifelineUsed, gameOver, on
                 onChange={e => setLifelineValue(e.target.value.toUpperCase())}
                 onKeyPress={e => { if (e.key === 'Enter') handleSendLifeline(); }}
                 autoFocus
-                style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', border: '1px solid var(--green-dim)', color: 'var(--green)', fontSize: '0.8rem', padding: '0.3rem' }}
               />
-              <button className="btn-send" onClick={handleSendLifeline} style={{ fontSize: '0.7rem', padding: '0.3rem 0.6rem' }}>SEND</button>
+              <button className="btn-send" onClick={handleSendLifeline}>SEND</button>
             </div>
           </div>
         )}
-
-        {/* Command Center Access - Major Steele */}
-        <button
-          className="btn-military secondary-btn"
-          onClick={onOpenCommandCenter}
-          style={{ width: '100%', fontSize: '0.75rem', padding: '0.6rem', borderColor: 'var(--green-dim)' }}
-        >
-          <span style={{ marginRight: '0.5rem' }}>📊</span>
-          INTEL HQ (COMMAND CENTER)
-        </button>
       </div>
     </aside>
   );

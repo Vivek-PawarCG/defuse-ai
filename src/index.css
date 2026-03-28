@@ -996,7 +996,49 @@ body,
     padding: 0.6rem 1.5rem;
 }
 
-/* ─── GRID COORDINATE LABELS ────────────────────── */
+/* ─── STRATEGIC DEBRIEF PANEL (Vertex AI + BigQuery) ──── */
+.strategic-debrief {
+    background: rgba(0, 255, 65, 0.03);
+    border: 1px solid rgba(0, 255, 65, 0.2);
+    border-left: 3px solid var(--green-dim);
+    border-radius: 2px;
+    margin: 1rem 0;
+    font-family: var(--font-mono);
+    overflow: hidden;
+}
+
+.debrief-header {
+    display: flex;
+    align-items: center;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--green-dim);
+    background: rgba(0, 255, 65, 0.05);
+    border-bottom: 1px solid rgba(0, 255, 65, 0.1);
+}
+
+.debrief-body {
+    padding: 0.75rem;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    color: var(--text);
+    text-align: left;
+    min-height: 2.5em;
+}
+
+.debrief-loading {
+    color: var(--green-dim);
+    font-style: italic;
+}
+
+.debrief-na {
+    color: var(--text-dim);
+    font-style: italic;
+}
+
+/* ─── GRID COORDINATE LABELS ──────────────────────── */
 .grid-label {
     display: flex;
     align-items: center;
@@ -1402,6 +1444,7 @@ body,
     .top-bar-right {
         flex-wrap: wrap;
         justify-content: flex-end;
+        overflow: hidden; /* prevent blowout */
     }
 
     .game-title-small {
@@ -1416,6 +1459,7 @@ body,
         flex-wrap: wrap;
         gap: 3px;
         justify-content: flex-end;
+        max-width: 100%;
     }
 
     .diff-btn {

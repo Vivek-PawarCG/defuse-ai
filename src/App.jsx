@@ -13,7 +13,6 @@ import { useAudio } from './hooks/useAudio.js';
 import { useRex } from './hooks/useRex.js';
 import VictoryOverlay from './components/VictoryOverlay.jsx';
 import FieldManual from './components/FieldManual.jsx';
-import CommandCenter from './components/CommandCenter.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import BriefingScreen from './components/BriefingScreen.jsx';
 import GameScreen from './components/GameScreen.jsx';
@@ -23,7 +22,6 @@ const INITIAL_DIFFICULTY = 'rookie';
 const SCREENS = {
   BRIEFING: 'briefing',
   GAME: 'game',
-  COMMAND_CENTER: 'command-center'
 };
 
 export default function App() {
@@ -57,6 +55,7 @@ export default function App() {
   const [victoryStats, setVictoryStats] = useState('');
   const [shakeClass, setShakeClass] = useState('');
   const [apiReady, setApiReady] = useState(false);
+  const [strategicDebrief, setStrategicDebrief] = useState(null); // null=loading | ''=unavailable | string=ready
 
   // ─── Refs for mutable state (avoid stale closures) ──────
   const moveHistoryRef = useRef([]);
@@ -91,7 +90,34 @@ export default function App() {
         })
       });
     } catch (err) {
-      console.error("Failed to archive mission", err);
+      console.error('Failed to archive mission', err);
+    }
+  }, [difficulty, timer.time]);
+
+  /**
+   * Fetch strategic debrief from Vertex AI via backend proxy.
+   * Fires after each game end. Sets strategicDebrief state when resolved.
+   * '': signals Vertex AI returned nothing (show fallback text in overlay).
+   */
+  const fetchStrategicDebrief = useCallback(async (result) => {
+    setStrategicDebrief(null); // reset to loading state
+    try {
+      const res = await fetch('/api/agent/debrief', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          difficulty,
+          result,
+          timeSpent: timer.time,
+          tilesCleared: tilesRevealedRef.current,
+          aiAdviceCount: aiAdviceCountRef.current || 0,
+        }),
+      });
+      const data = await res.json();
+      setStrategicDebrief(data.debrief ?? '');
+    } catch (err) {
+      console.error('[Debrief] Fetch failed:', err);
+      setStrategicDebrief(''); // show fallback
     }
   }, [difficulty, timer.time]);
 
@@ -149,6 +175,7 @@ export default function App() {
     tilesRevealedRef.current = 0;
     minesRemainingRef.current = cfg.mines;
     aiAdviceCountRef.current = 0; // Reset AI advice count
+    setStrategicDebrief(null); // Reset debrief for new game
 
     trackEvent('mission_start', { difficulty });
   }, [difficulty, timer]);
@@ -189,8 +216,9 @@ export default function App() {
     audio.speakRex(mainSpeech, personality, true);
 
     trackEvent('mission_success', { difficulty, time: timeVal, score: totalSafeTiles });
-    archiveMission('success');
-  }, [timer, audio, rex, personality, totalSafeTiles, flagsUsed, archiveMission]);
+    await archiveMission('success');
+    fetchStrategicDebrief('success');
+  }, [timer, audio, rex, personality, totalSafeTiles, flagsUsed, archiveMission, fetchStrategicDebrief]);
 
   // ─── Handle Explosion ───────────────────────────────────
   const handleExplosion = useCallback(async (r, c, isSurrender = false, currentBoard) => {
@@ -244,8 +272,10 @@ export default function App() {
     audio.speakRex(eulogyText, personality, true);
 
     trackEvent('mission_failed', { difficulty, time: timeVal, result: isSurrender ? 'surrender' : 'explosion' });
-    archiveMission(isSurrender ? 'surrender' : 'fail');
-  }, [timer, audio, rex, personality, config, archiveMission]);
+    const archiveResult = isSurrender ? 'surrender' : 'fail';
+    await archiveMission(archiveResult);
+    fetchStrategicDebrief(archiveResult);
+  }, [timer, audio, rex, personality, config, archiveMission, fetchStrategicDebrief]);
 
   // ─── Reveal Tile ─────────────────────────────────────────
   const revealTile = useCallback((r, c) => {
@@ -521,6 +551,7 @@ export default function App() {
       rex.addMessage("Back on your feet, soldier. This minefield won't clear itself.", "Retry");
       return;
     }
+    // handleExplosion internally calls archiveMission + fetchStrategicDebrief
     handleExplosion(0, 0, true, boardRef.current);
   }, [gameOver, rex, resetGame, handleExplosion]);
 
@@ -593,6 +624,7 @@ export default function App() {
             gameOverTitle={gameOverTitle}
             gameOverEulogy={gameOverEulogy}
             gameOverStats={gameOverStats}
+            strategicDebrief={strategicDebrief}
             showVictory={showVictory}
             victorySpeech={victorySpeech}
             victoryTitle={victoryTitle}
@@ -615,13 +647,6 @@ export default function App() {
             onReturnToBase={returnToBase}
             onNextMission={nextMission}
             onDismissVictory={dismissVictory}
-            onOpenCommandCenter={() => setScreen(SCREENS.COMMAND_CENTER)}
-          />
-        );
-      case SCREENS.COMMAND_CENTER:
-        return (
-          <CommandCenter
-            onReturnToMenu={() => setScreen(SCREENS.BRIEFING)}
           />
         );
       default:

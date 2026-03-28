@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { saveHighscore } from '../utils/firebase.js';
 
-export default function VictoryOverlay({ speech, title, stats, score, time, difficulty, onNextMission, onReviewBoard }) {
+export default function VictoryOverlay({ speech, title, stats, strategicDebrief, score, time, difficulty, onNextMission, onReviewBoard }) {
   const canvasRef = useRef(null);
   const [showTitle, setShowTitle] = useState(false);
 
@@ -101,6 +101,22 @@ export default function VictoryOverlay({ speech, title, stats, score, time, diff
           </div>
         )}
         <div className="victory-stats">{stats}</div>
+
+        {/* ── Strategic Debrief (Vertex AI + BigQuery) ─────── */}
+        <div className="strategic-debrief">
+          <div className="debrief-header">
+            <span className="blink-dot" style={{ width: 6, height: 6 }}></span>
+            STRATEGIC DEBRIEF — MAJ. STEELE
+          </div>
+          <div className="debrief-body">
+            {strategicDebrief === undefined || strategicDebrief === null
+              ? <span className="debrief-loading">Analyzing mission archives<span className="loading-dots">...</span></span>
+              : strategicDebrief === ''
+                ? <span className="debrief-na">Archives unavailable for this mission.</span>
+                : strategicDebrief
+            }
+          </div>
+        </div>
 
         {!submitted ? (
           <form className="lb-submit-box" onSubmit={handleScoreSubmit}>

@@ -11,13 +11,13 @@ export default function GameScreen({
   board, rows, cols, difficulty, minesRemaining, tilesRevealed, totalSafeTiles,
   time, gameOver, firstClick, personality, voiceEnabled, heatmapEnabled, heatmapData,
   autoSolving, lifelineUsed, missedFlags, shakeClass,
-  showGameOver, gameOverTitle, gameOverEulogy, gameOverStats,
+  showGameOver, gameOverTitle, gameOverEulogy, gameOverStats, strategicDebrief,
   showVictory, victorySpeech, victoryTitle, victoryStats,
   rexMessages, rexLoading,
   onRevealTile, onFlagTile, onSwitchDifficulty, onSwitchPersonality,
   onToggleVoice, onToggleHeatmap, onAutoSolve, onSurrender,
   onSendLifeline, onRetry, onReviewBoard, onReturnToBase,
-  onNextMission, onDismissVictory, onOpenCommandCenter
+  onNextMission, onDismissVictory,
 }) {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   return (
@@ -63,7 +63,6 @@ export default function GameScreen({
           lifelineUsed={lifelineUsed}
           gameOver={gameOver}
           onSendLifeline={onSendLifeline}
-          onOpenCommandCenter={onOpenCommandCenter}
         />
 
         {showGameOver && (
@@ -71,6 +70,7 @@ export default function GameScreen({
             title={gameOverTitle}
             eulogy={gameOverEulogy}
             stats={gameOverStats}
+            strategicDebrief={strategicDebrief}
             onRetry={onRetry}
             onReviewBoard={onReviewBoard}
             onReturnToBase={onReturnToBase}
@@ -82,6 +82,7 @@ export default function GameScreen({
             speech={victorySpeech}
             title={victoryTitle}
             stats={victoryStats}
+            strategicDebrief={strategicDebrief}
             score={tilesRevealed}
             time={time}
             difficulty={difficulty}
