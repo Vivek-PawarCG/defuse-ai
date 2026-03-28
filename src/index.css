@@ -36,6 +36,31 @@
     padding: 0;
 }
 
+/* ─── GLOBAL SCROLLBAR THEME ─────────────────────── */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--green-dim) transparent;
+}
+
+*::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: var(--green-dim);
+    border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green-glow);
+}
+
 html,
 body,
 #root {
@@ -396,17 +421,6 @@ body,
     overflow-x: auto;
     padding-bottom: 10px;
     /* Space for scrollbar */
-    scrollbar-width: thin;
-    scrollbar-color: var(--green-dim) transparent;
-}
-
-#grid-panel::-webkit-scrollbar {
-    height: 4px;
-}
-
-#grid-panel::-webkit-scrollbar-thumb {
-    background: var(--green-dim);
-    border-radius: 4px;
 }
 
 .grid {
@@ -833,19 +847,7 @@ body,
     background: var(--green-dim);
 }
 
-/* ─── REX MESSAGES SCROLLBAR ────────────────────── */
-.rex-messages::-webkit-scrollbar {
-    width: 4px;
-}
 
-.rex-messages::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.rex-messages::-webkit-scrollbar-thumb {
-    background: var(--green-dark);
-    border-radius: 2px;
-}
 
 /* ═══════════════════════════════════════════════════
    GAME OVER OVERLAY
