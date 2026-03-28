@@ -242,42 +242,95 @@ app.post('/api/archive', async (req, res) => {
  */
 app.post('/api/agent/chat', async (req, res) => {
   const { message } = req.body;
+
+  // ── Pre-flight validation ─────────────────────────────────
+  if (!message || typeof message !== 'string' || !message.trim()) {
+    return res.status(400).json({ error: 'Missing or empty message body.' });
+  }
+
   try {
-    const keys = await getApiKeys();
-    // Vertex AI supports ADC natively, but we ensure configuration is present
-    if (!PROJECT_ID) return res.status(500).json({ error: "Missing Google Cloud Project ID" });
+    // ── Environment checks ────────────────────────────────────
+    if (!PROJECT_ID) {
+      console.error('[Agent] CRITICAL: GOOGLE_CLOUD_PROJECT is not set.');
+      return res.status(500).json({ error: 'Server misconfiguration: missing project ID.' });
+    }
+
+    console.log(`[Agent] Incoming request | project=${PROJECT_ID} | message_len=${message.length}`);
 
     const model = getSteeleModel();
+    console.log('[Agent] Vertex AI model instantiated. Calling generateContent...');
+
     let result = await model.generateContent(message);
-    let response = await result.response;
+    let response = result.response;
+
+    // ── Guard: check candidates exist ─────────────────────────
+    if (!response?.candidates?.length) {
+      console.error('[Agent] No candidates returned from Vertex AI:', JSON.stringify(response));
+      return res.status(502).json({
+        error: 'Vertex AI returned no candidates.',
+        raw: response,
+      });
+    }
+
     let parts = response.candidates[0].content.parts;
 
-    // Handle single-turn function calling
+    // ── Handle single-turn function calling ───────────────────
     const functionCallPart = parts.find(p => p.functionCall);
     if (functionCallPart) {
       const { name, args } = functionCallPart.functionCall;
+      console.log(`[Agent] Function call detected: ${name}`, args);
       const toolResult = await runSteeleTool(name, args);
-      
+      console.log(`[Agent] Tool result for ${name}:`, JSON.stringify(toolResult));
+
       const secondaryResult = await model.generateContent({
         contents: [
           { role: 'user', parts: [{ text: message }] },
           { role: 'model', parts: [functionCallPart] },
-          { 
-            role: 'user', 
-            parts: [{ 
-              functionResponse: { name, response: { content: toolResult } } 
-            }] 
+          {
+            role: 'user',
+            parts: [{
+              functionResponse: { name, response: { content: toolResult } }
+            }]
           }
         ]
       });
-      response = await secondaryResult.response;
+      response = secondaryResult.response;
+
+      if (!response?.candidates?.length) {
+        console.error('[Agent] No candidates after tool call:', JSON.stringify(response));
+        return res.status(502).json({ error: 'No candidates returned after tool call.', raw: response });
+      }
     }
 
     const finalResponse = response.candidates[0].content.parts[0].text;
+    console.log('[Agent] Success. Responding to client.');
     res.status(200).json({ response: finalResponse });
+
   } catch (err) {
-    console.error("[Intelligence Office] Analysis failed.", err.message);
-    res.status(500).json({ error: "Major Steele is currently dealing with high-priority intel. Try again shortly." });
+    // ── Detailed error logging ────────────────────────────────
+    const errDetail = {
+      message:    err.message,
+      name:       err.name,
+      code:       err.code,
+      status:     err.status ?? err.statusCode,
+      stack:      err.stack,
+      // Vertex AI / gRPC errors sometimes have these
+      details:    err.details,
+      metadata:   err.metadata ? Object.fromEntries(err.metadata) : undefined,
+      response:   err.response?.data ?? err.response,
+    };
+    console.error('[Intelligence Office] /api/agent/chat FAILED:', JSON.stringify(errDetail, null, 2));
+
+    res.status(500).json({
+      error: 'Major Steele is currently dealing with high-priority intel. Try again shortly.',
+      // Include diagnostic info (strip in production if needed)
+      debug: {
+        message: err.message,
+        code:    err.code,
+        status:  err.status ?? err.statusCode,
+        details: err.details,
+      },
+    });
   }
 });
 
