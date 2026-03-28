@@ -31,9 +31,9 @@ const tools = [
  */
 export function getSteeleModel() {
   const vertex_ai = new VertexAI({ project: PROJECT_ID, location: 'us-central1' });
-  
+
   return vertex_ai.getGenerativeModel({
-    model: 'gemini-1.5-flash', // Keeping 1.5-flash for stability; upgrade to 2.5/3.1 once ID is confirmed in environment
+    model: 'gemini-2.5-flash-lite',
     systemInstruction: {
       role: 'system',
       parts: [{
